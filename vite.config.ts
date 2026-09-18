@@ -5,13 +5,15 @@
  * 保证构建产物可以放在任意目录层级下而不需要重新配置。
  */
 import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 
 export default defineConfig({
   base: './',
 
+  // Vue 组件（关卡容器壳与各关卡 UI）需要该插件编译
   // 构建期压缩图片资源，抵消 AI 生成素材体积偏大的问题
-  plugins: [ViteImageOptimizer()],
+  plugins: [vue(), ViteImageOptimizer()],
 
   server: {
     port: 5173,

@@ -1,78 +1,82 @@
 # kashigame
 
-喀什古城主题 2D 横版探索游戏（H5 / 网页端）。
+喀什古城主题游戏**关卡容器**（H5 / 网页端）。
 
 ## 项目定位
 
 | 项 | 内容 |
 | --- | --- |
-| 类型 | 探索 / 步行模拟 |
+| 类型 | 关卡容器：地图探索（主世界）+ 文化关卡 |
 | 视角 | 横版侧视 |
-| 玩法 | 文化元素收集 + 主线叙事推进 + 轻解谜解锁 |
-| 美术 | AI 生成 + 后期修整 |
+| 玩法 | 在地图探索中走到特殊地点，进入对应文化关卡（如艾德莱斯绸染坊） |
+| 技术栈 | Vue 3 + Phaser 3 + JavaScript + Vite |
+| 分工 | 容器壳与关卡：本仓库；地图探索：另一位同学制作后接入 |
 
-## 技术栈
+## 架构
 
-### 核心
+```
+index.html
+  └─ #game                          ← 唯一挂载点（Vue 与所有 Phaser 实例都在其内）
+      └─ src/main.js                ← Vue 应用入口
+          └─ src/App.vue            ← 容器壳：地图探索 ↔ 关卡 状态切换
+              ├─ 地图探索（待接入）    ← 另一位同学交付后挂载；emit('enter-level', id) 进入关卡
+              └─ 关卡组件            ← src/levels/<id>/，emit('exit') 返回地图
+```
 
-| 层 | 选型 | 版本 | 作用 |
-| --- | --- | --- | --- |
-| 游戏引擎 | Phaser 3 | 3.90.0 | 场景、渲染、输入、Arcade 物理、音频 |
-| 语言 | TypeScript | 6.x | Phaser 自带完整类型定义，编辑器提示与重构安全 |
-| 构建 / 开发服务器 | Vite | 8.x | 秒级冷启动、HMR、生产构建、资源处理 |
-| 包管理 | npm | 随 Node LTS | 依赖管理 |
-| Node | LTS | 20+ | 构建环境（当前 v22.15.0） |
+- **地图探索**是主世界，游戏内容所在；走到特殊地点（如丝绸染坊门口）触发对应关卡。
+- **关卡**是独立模块：挂载时创建自己的 Phaser 实例并挂到 `#game` 内容器，卸载时销毁；通过 `emit('exit')` 返回地图探索。
+- 当前地图尚未交付，壳默认显示「地图探索接入位」提示页，并提供临时测试入口以便单独验证各关卡。
 
-> 注意：`npm install phaser` 默认会装 Phaser 4。本项目锁定 Phaser 3，安装/升级时须显式指定 `phaser@^3`。
+## 目录结构
 
-### 运行时
+```
+src/
+├── main.js                 # Vue 入口，挂载 #game
+├── App.vue                 # 容器壳（地图探索 ↔ 关卡 切换）
+├── levels/
+│   ├── registry.js         # 关卡注册表（登记一个关卡 = 加入一条记录）
+│   └── adilesi/            # 关卡一：艾德莱斯绸（染坊扎染体验）
+│       ├── AdilesiLevel.vue    # 关卡组件入口（原独立项目的 App.vue，退出改为 emit('exit')）
+│       ├── components/         # 关卡 UI 组件
+│       ├── game/               # Phaser 场景与纯逻辑（WorkshopScene / levelMachine / craftRules …）
+│       ├── data/               # 对话与任务内容
+│       └── styles/main.css     # 关卡样式
+└── legacy/                 # 旧 TypeScript 骨架（早期占位探索，保留备查，不参与构建）
+```
 
-| 项 | 取值 | 说明 |
-| --- | --- | --- |
-| 渲染器 | WebGL 2，Canvas 兜底 | Phaser 默认策略，保留旧设备兼容 |
-| 物理 | Arcade Physics | 只需平面碰撞，不用 Matter |
-| 分辨率 | 1920×1080 设计尺寸 | 匹配 AI 出图原生分辨率 |
-| 缩放 | `Scale.FIT` + 居中 | 适配 H5 各种窗口比例 |
-| 音频 | Phaser 内置 Web Audio，HTML5 Audio 兜底 | 无需引入 Howler |
-| 存档 | `localStorage` | Phaser 无内置，自行封装 |
+关卡资源统一放在 `public/assets/` 下，由各关卡 `assetPaths.js` 通过 `import.meta.env.BASE_URL` 引用。
 
-### 资源管线
+## 新增一个关卡
 
-| 环节 | 工具 |
-| --- | --- |
-| 素材生成 | AI 出图（背景、角色、道具） |
-| 抠图 / 统一尺寸 / 批量处理 | Node 脚本（`sharp`） |
-| 图集打包 | free-texture-packer 或 TexturePacker |
-| 构建期图片压缩 | `vite-plugin-image-optimizer` |
-| 音频压缩 | 构建前手动压至 ogg / m4a 双格式 |
+1. 在 `src/levels/<id>/` 下实现关卡组件，约定：
+   - 挂载时创建自己的 `Phaser.Game`，`parent` 指向模板内容器（位于 `#game` 内）；
+   - 卸载时 `game.destroy(true)`；
+   - 需要退出/返回地图时 `emit('exit')`。
+2. 在 `src/levels/registry.js` 登记一条记录（id / title / desc / component）。
+3. 地图探索交付后，在其场景中为关卡添加对应地点入口，触发 `emit('enter-level', <id>)`。
 
-### 工程化
+## 地图探索接入
 
-| 项 | 工具 |
-| --- | --- |
-| 代码规范 | ESLint 10 + Prettier 3 |
-| 类型检查 | `tsc --noEmit`（TypeScript 6） |
-| 单元测试 | Vitest 5（仅测不依赖 Phaser 的纯逻辑：存档、收集、剧情状态） |
-| 提交规范 | Conventional Commits（可选） |
+正式地图（另一位同学制作，Vue + Phaser + JS）交付后：
 
-### 部署
-
-**待定。**
-
-候选方案：静态托管（GitHub Pages / Vercel / Netlify）或自有服务器。
-确定前不影响开发，`vite build` 产物为纯静态文件，可部署到任意静态托管。
-
-> 注意：若最终选择 GitHub Pages 且仓库名非 `<user>.github.io`，Vite 需配置 `base: '/kashigame/'`。
+1. 将地图组件放入 `src/levels/map-explore/`（或替换 `App.vue` 中「地图探索接入位」视图）；
+2. 地图组件挂载时创建 Phaser 实例，卸载时销毁；
+3. 地图走到特殊地点时 `emit('enter-level', <levelId>)` 进入关卡；
+4. 关卡返回时容器自动切回地图。
 
 ## 开发命令
 
 ```bash
-npm install      # 安装依赖
-npm run dev      # 启动开发服务器（HMR）
-npm run build    # 类型检查 + 生产构建
+npm install      # 安装依赖（首次或依赖变更后）
+npm run dev      # 启动开发服务器（HMR，端口 5173）
+npm run build    # 生产构建
 npm run preview  # 预览构建产物
-npm run typecheck # 仅类型检查
 npm run test     # 运行单元测试
-npm run lint     # 代码检查
-npm run format   # 代码格式化
 ```
+
+> 注意：`npm install phaser` 默认会装 Phaser 4。本项目锁定 Phaser 3，安装/升级时须显式指定 `phaser@^3`。
+
+## 部署
+
+**待定。** `vite build` 产物为纯静态文件，可部署到任意静态托管。
+若选择 GitHub Pages 且仓库名非 `<user>.github.io`，需配置 `base: '/kashigame/'`。

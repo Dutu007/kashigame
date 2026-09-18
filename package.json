@@ -1,23 +1,22 @@
 {
   "name": "kashigame",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "喀什古城主题 2D 横版探索游戏（H5）",
+  "description": "喀什古城主题游戏容器：地图探索 + 文化关卡（Vue3 + Phaser3 + JS）",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "lint": "eslint .",
-    "format": "prettier --write ."
+    "test": "vitest run"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "vue": "^3.5.43"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
+    "@vitejs/plugin-vue": "^6.0.9",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",

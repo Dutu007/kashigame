@@ -1,0 +1,31 @@
+{
+  "background": "/assets/backgrounds/workshop-street.png",
+  "backgroundAlt": "/assets/backgrounds/workshop-street-alt.png",
+  "playerPortrait": "/assets/characters/player/player-portrait.png",
+  "master": "/assets/characters/npc/master-ayti.png",
+  "props": "/assets/props/workshop-props.png",
+  "storefront": "/assets/props/workshop-storefront.png",
+  "uiKit": "/assets/ui/workshop-ui-kit.png",
+  "propSprites": {
+    "vatBlue": "/assets/props/vat-blue.png",
+    "vatRed": "/assets/props/vat-red.png",
+    "vatYellow": "/assets/props/vat-yellow.png",
+    "platformWood": "/assets/props/platform-wood.png",
+    "platformStone": "/assets/props/platform-stone.png",
+    "silkBlue": "/assets/props/silk-blue.png",
+    "silkRed": "/assets/props/silk-red.png",
+    "silkGold": "/assets/props/silk-gold.png",
+    "patternSample": "/assets/props/pattern-sample.png",
+    "waterValve": "/assets/props/water-valve.png"
+  },
+  "animations": {
+    "idleRight": { "prefix": "/assets/characters/player/idle-right-", "frames": 4 },
+    "idleLeft": { "prefix": "/assets/characters/player/idle-left-", "frames": 4 },
+    "walkRight": { "prefix": "/assets/characters/player/walk-right-", "frames": 6 },
+    "walkLeft": { "prefix": "/assets/characters/player/walk-left-", "frames": 6 },
+    "runRight": { "prefix": "/assets/characters/player/run-right-", "frames": 4 },
+    "runLeft": { "prefix": "/assets/characters/player/run-left-", "frames": 4 },
+    "jumpRight": { "prefix": "/assets/characters/player/jump-right-", "frames": 4 },
+    "jumpLeft": { "prefix": "/assets/characters/player/jump-left-", "frames": 4 }
+  }
+}
