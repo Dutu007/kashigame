@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { assets, framePath } from '../assetPaths.js'
+import { assets, framePath, audioAssets } from '../assetPaths.js'
 import { gameBus } from '../eventBus.js'
 import { resolvePlayerAnimation } from '../playerAnimation.js'
 import { getNpcMarker } from '../missionGuidance.js'
@@ -57,8 +57,6 @@ export class WorkshopScene extends Phaser.Scene {
   preload() {
     this.load.image('workshop-background', assets.background)
     this.load.image('master-ayti', assets.master)
-    this.load.image('prop-vat-blue', assets.vatBlue)
-    this.load.image('prop-vat-red', assets.vatRed)
     this.load.image('prop-vat-yellow', assets.vatYellow)
     this.load.image('prop-platform', assets.platformWood)
     this.load.image('prop-platform-stone', assets.platformStone)
@@ -67,6 +65,7 @@ export class WorkshopScene extends Phaser.Scene {
     this.load.image('prop-silk-gold', assets.silkGold)
     this.load.image('prop-pattern', assets.patternSample)
     this.load.image('prop-valve', assets.waterValve)
+    this.load.audio('jump-whoosh', audioAssets.jumpWhoosh)
 
     Object.entries(animationDefinitions).forEach(([name, definition]) => {
       for (let frame = 1; frame <= definition.frames; frame += 1) {
@@ -140,24 +139,63 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   createWorkshopProps() {
-    // 染缸排成一列，作为染坊的染色区（纯装饰）
-    const vats = [
-      { key: 'prop-vat-blue', x: 920 },
-      { key: 'prop-vat-red', x: 1030 },
-      { key: 'prop-vat-yellow', x: 1140 },
-    ]
-    this.dyeVats = vats.map(({ key, x }) =>
-      this.add.image(x, GROUND_Y + 2, key)
-        .setDisplaySize(150, 112)
+    // 只保留黄色染缸，并放在水阀旁边；蓝、红染缸属于水阀设施的一部分。
+    this.dyeVats = [
+      this.add.image(1030, GROUND_Y + 2, 'prop-vat-yellow')
+        .setDisplaySize(170, 128)
         .setOrigin(0.5, 1)
         .setDepth(5),
-    )
+    ]
 
-    // 水阀：染缸旁，需要纹样密码才能开启
-    this.valve = this.add.image(1280, GROUND_Y, 'prop-valve')
-      .setDisplaySize(104, 104)
+    // 水阀从进入染坊就存在，底边贴地，内部水流持续运行。
+    // 素材底部有透明留白，向下补偿后让可见石台底部真正贴住地面。
+    this.valve = this.add.image(1240, GROUND_Y + 54, 'prop-valve')
+      .setDisplaySize(260, 220)
       .setOrigin(0.5, 1)
-      .setDepth(14)
+      .setDepth(5)
+
+    this.createValveFlow()
+  }
+
+  createValveFlow() {
+    // 只给 water-valve.png 内两处染液池的液面加波纹，水阀主体保持固定。
+    const flowPoints = [
+      { x: 137, y: 127, delay: 0 },
+      { x: 137, y: 127, delay: 500 },
+      { x: 207, y: 127, delay: 250 },
+      { x: 207, y: 127, delay: 750 },
+    ]
+    this.valveFlow = flowPoints.map(({ x, y, delay }) => {
+      const ripple = this.add.ellipse(this.valve.x - 130 + x, this.valve.y - 220 + y, 34, 10)
+        .setStrokeStyle(2, 0xbcecff, 0.7)
+        .setDepth(6)
+        .setAlpha(0)
+      const tween = this.tweens.add({
+        targets: ripple,
+        scaleX: 1.6,
+        scaleY: 1.25,
+        alpha: 0,
+        duration: 1500,
+        delay,
+        repeat: -1,
+        ease: 'Sine.easeOut',
+        paused: true,
+      })
+      return { ripple, tween }
+    })
+  }
+
+  setValveFlow(active) {
+    if (!this.valveFlow) return
+    this.valveFlow.forEach(({ ripple, tween }) => {
+      if (active) {
+        ripple.setAlpha(0.72)
+        tween.resume()
+      } else {
+        tween.pause()
+        ripple.setAlpha(0).setScale(1)
+      }
+    })
   }
 
   createPlatforms() {
@@ -176,17 +214,18 @@ export class WorkshopScene extends Phaser.Scene {
   }
 
   createMissionObjects() {
-    // 蚕丝束：放在不同高度的木台上，需要跳跃获取
+    // 蚕丝束：放在不同高度的木台上，需要跳跃获取（新蚕丝束图，tint 区分三色）
     const silkDefinitions = [
-      { id: 'silk-blue', texture: 'prop-silk-blue' },
-      { id: 'silk-red', texture: 'prop-silk-red' },
-      { id: 'silk-gold', texture: 'prop-silk-gold' },
+      { id: 'silk-blue', texture: 'prop-silk-blue', tint: 0x88aaff },
+      { id: 'silk-red', texture: 'prop-silk-red', tint: 0xff8888 },
+      { id: 'silk-gold', texture: 'prop-silk-gold', tint: 0xffdd88 },
     ]
-    this.silkBundles = silkDefinitions.map(({ id, texture }, index) => {
+    this.silkBundles = silkDefinitions.map(({ id, texture, tint }, index) => {
       const layout = platformLayout[index]
       const sprite = this.add.image(layout.x, layout.topY - 22, texture)
         .setDisplaySize(74, 62)
         .setDepth(12)
+        .setTint(tint)
       sprite.setData('id', id)
       sprite.setData('homeY', layout.topY - 22)
       this.tweens.add({
@@ -284,7 +323,8 @@ export class WorkshopScene extends Phaser.Scene {
       }
       this.patternSample.setVisible(this.currentStep === LEVEL_STEPS.FIND_PATTERN && !patternCollected)
     }
-    this.valve.setVisible(this.currentStep === LEVEL_STEPS.OPEN_VALVE)
+    this.valve.setVisible(true)
+    this.setValveFlow(true)
     this.masterMarker.setText(getNpcMarker(this.currentStep, 'master'))
   }
 
@@ -456,6 +496,8 @@ export class WorkshopScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.jump) && grounded) {
       // 更高的起跳速度：配合木台完成“跳跃取丝”的平台玩法
       this.player.setVelocityY(-580)
+      // 跳跃破空声
+      this.sound.play('jump-whoosh', { volume: 0.5 })
     }
 
     const animation = resolvePlayerAnimation({

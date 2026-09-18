@@ -2,13 +2,10 @@
 /**
  * 关卡容器壳。
  *
- * 两种状态：
- * - 地图探索（默认主世界）：由另一位同学制作，交付后挂载到本视图位置；
- *   地图探索组件走到特殊地点时 emit('enter-level', <levelId>) 进入关卡。
- * - 关卡：渲染对应关卡组件，关卡内部通过 emit('exit') 返回地图探索。
- *
- * 当前地图尚未交付，壳默认显示「地图探索接入位」提示页，
- * 并提供临时测试入口，便于单独验证各关卡。
+ * 状态：
+ * - 主菜单（默认）：显示游戏标题与关卡入口；地图探索交付后，
+ *   本视图作为地图启动入口，关卡改由地图中的特殊地点触发。
+ * - 关卡：渲染对应关卡组件，关卡内部通过 emit('exit') 返回主菜单。
  */
 import { computed, ref } from 'vue'
 import { levels } from './levels/registry.js'
@@ -29,26 +26,28 @@ function exitLevel() {
 </script>
 
 <template>
-  <!-- 地图探索接入位：正式地图交付后替换此视图 -->
-  <section v-if="!activeLevel" class="map-slot">
-    <p class="map-slot__tag">MAP EXPLORE · 地图探索接入位</p>
-    <h1>喀什古城</h1>
-    <p class="map-slot__intro">
-      游戏主世界为地图探索（由另一位同学制作），玩家在地图探索中走到特殊地点进入关卡。
-      <br />地图交付后挂载方式见 README「地图探索接入」章节。
-    </p>
-    <div class="map-slot__levels">
-      <button
-        v-for="level in levels"
-        :key="level.id"
-        type="button"
-        class="map-slot__level"
-        @click="enterLevel(level.id)"
-      >
-        <span class="map-slot__title">{{ level.title }}</span>
-        <span class="map-slot__desc">{{ level.desc }}</span>
-        <small class="map-slot__hint">临时测试入口 · 正式版由地图地点触发</small>
-      </button>
+  <!-- 主菜单：地图探索交付后，本视图作为地图的启动入口 -->
+  <section v-if="!activeLevel" class="hub-menu">
+    <div class="hub-menu__backdrop"></div>
+    <div class="hub-menu__content">
+      <p class="hub-menu__eyebrow">KASHGAR TOWN · CULTURAL JOURNEY</p>
+      <h1 class="hub-menu__title">喀什古城</h1>
+      <div class="hub-menu__divider" aria-hidden="true"><span>✦</span></div>
+      <p class="hub-menu__subtitle">丝路拾遗 · 选择一段文化旅程</p>
+
+      <div class="hub-menu__levels">
+        <button
+          v-for="level in levels"
+          :key="level.id"
+          type="button"
+          class="hub-menu__level"
+          @click="enterLevel(level.id)"
+        >
+          <span class="hub-menu__level-title">{{ level.title }}</span>
+          <span class="hub-menu__level-desc">{{ level.desc }}</span>
+          <span class="hub-menu__level-action">进入 →</span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -57,89 +56,126 @@ function exitLevel() {
 </template>
 
 <style scoped>
-.map-slot {
+.hub-menu {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  background:
-    radial-gradient(1200px 600px at 50% 30%, rgba(232, 192, 125, 0.18), transparent 70%),
-    #1a1410;
+  position: relative;
+  overflow: hidden;
+  background: #1a1410;
   color: #f4e6cd;
-  box-sizing: border-box;
-  padding: 24px;
 }
 
-.map-slot__tag {
-  margin: 0;
-  font-size: 14px;
-  letter-spacing: 0.3em;
-  color: #8a7355;
+.hub-menu__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(24, 13, 8, 0.94) 0%, rgba(30, 16, 10, 0.82) 34%, rgba(30, 16, 10, 0.38) 68%, rgba(24, 13, 8, 0.55) 100%),
+    url('/assets/backgrounds/workshop-street.png') center / cover no-repeat;
 }
 
-.map-slot h1 {
-  margin: 0;
-  font-size: 72px;
-  color: #e8c07d;
-  letter-spacing: 0.12em;
-}
-
-.map-slot__intro {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.8;
-  text-align: center;
-  color: #b7a183;
-}
-
-.map-slot__levels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.map-slot__level {
-  width: 240px;
-  min-height: 120px;
+.hub-menu__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  gap: 18px;
+  padding: 0 clamp(40px, 8vw, 140px);
+  box-sizing: border-box;
+  max-width: 860px;
+}
+
+.hub-menu__eyebrow {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  color: #c9a86a;
+}
+
+.hub-menu__title {
+  margin: 0;
+  font-family: 'Songti SC', 'STSong', serif;
+  font-size: clamp(64px, 7vw, 108px);
+  line-height: 0.95;
+  letter-spacing: 0.1em;
+  color: #e8c07d;
+  text-shadow: 0 4px 28px rgba(30, 12, 5, 0.55);
+}
+
+.hub-menu__divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #d49a39;
+  font-size: 15px;
+}
+
+.hub-menu__divider::before,
+.hub-menu__divider::after {
+  content: '';
+  height: 1px;
+  width: 56px;
+  background: linear-gradient(90deg, transparent, rgba(212, 154, 57, 0.7));
+}
+
+.hub-menu__divider::after {
+  background: linear-gradient(90deg, rgba(212, 154, 57, 0.7), transparent);
+}
+
+.hub-menu__subtitle {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: #d9c6a3;
+}
+
+.hub-menu__levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.hub-menu__level {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  padding: 18px;
-  border: 1px solid rgba(232, 192, 125, 0.35);
+  padding: 16px 18px;
+  border: 1px solid rgba(232, 192, 125, 0.32);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(24, 14, 8, 0.55);
   color: inherit;
   font: inherit;
+  text-align: left;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
 }
 
-.map-slot__level:hover {
-  background: rgba(232, 192, 125, 0.12);
+.hub-menu__level:hover {
+  background: rgba(232, 192, 125, 0.14);
   border-color: #e8c07d;
   transform: translateY(-2px);
 }
 
-.map-slot__title {
-  font-size: 22px;
+.hub-menu__level-title {
+  font-size: 21px;
   font-weight: 700;
   color: #e8c07d;
 }
 
-.map-slot__desc {
+.hub-menu__level-desc {
   font-size: 13px;
-  color: #b7a183;
+  color: #c2ae8c;
 }
 
-.map-slot__hint {
+.hub-menu__level-action {
+  margin-top: 4px;
   font-size: 12px;
-  color: #8a7355;
+  letter-spacing: 0.1em;
+  color: #d49a39;
 }
 </style>

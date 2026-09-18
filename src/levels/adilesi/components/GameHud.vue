@@ -54,12 +54,12 @@ function interact() {
           <img
             v-for="silk in silkList"
             :key="silk.id"
-            :src="`/assets/props/${silk.id}.png`"
+            src="/assets/props/clue-silk-bundle.png"
             :alt="silk.label"
             :class="['inventory-silk', { 'inventory-silk--got': inventory.silk.includes(silk.id) }]"
           />
           <img
-            src="/assets/props/pattern-sample.png"
+            src="/assets/props/clue-pattern-sample.png"
             alt="纹样样本"
             :class="['inventory-pattern', { 'inventory-pattern--got': inventory.pattern }]"
           />

@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { masterDialogue } from '../data/dialogue.js'
+import { playAmbient, stopAmbient } from '../game/ambientAudio.js'
 
 const emit = defineEmits(['complete'])
 const index = ref(0)
@@ -46,7 +47,11 @@ function advance() {
 }
 
 watch(index, beginTyping, { immediate: true })
-onBeforeUnmount(clearTyping)
+onMounted(() => playAmbient())
+onBeforeUnmount(() => {
+  clearTyping()
+  stopAmbient()
+})
 </script>
 
 <template>

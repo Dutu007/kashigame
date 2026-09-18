@@ -1,5 +1,9 @@
 <script setup>
-defineProps({ complete: { type: Boolean, default: false } })
+defineProps({
+  complete: { type: Boolean, default: false },
+  fabricStyle: { type: Object, default: () => ({}) },
+  fabricClass: { type: String, default: '' },
+})
 defineEmits(['accept', 'return'])
 </script>
 
@@ -9,7 +13,12 @@ defineEmits(['accept', 'return'])
       <div class="reward-rays"></div>
       <div class="collection-card">
         <span class="collection-card__tag">文化收藏 · 01</span>
-        <div class="collection-card__pattern"></div>
+        <div
+          :class="['collection-card__pattern', fabricClass]"
+          :style="fabricStyle"
+          role="img"
+          aria-label="根据扎结和染色生成的艾德莱斯绸成品"
+        ></div>
         <h3>艾德莱斯绸</h3>
         <small>新疆传统丝织艺术</small>
       </div>

@@ -18,6 +18,10 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    watch: {
+      // public/assets 是静态素材，无需热更新；忽略以规避 Windows 文件锁导致的 EBUSY 崩溃
+      ignored: ['**/public/assets/**'],
+    },
   },
 
   build: {

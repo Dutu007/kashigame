@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { applyDye, checkPattern, isDyeComplete, toggleTiePoint } from '../game/craftRules.js'
+import { applyDye, checkPattern, isDyeComplete, toggleTiePoint, classifyTie, TIE_TYPE_NAMES, COLOR_NAMES, COLOR_HEX } from '../game/craftRules.js'
 
 const props = defineProps({ step: { type: String, required: true } })
 const emit = defineEmits(['pattern-complete', 'tying-complete', 'dyeing-complete', 'reveal-complete'])
@@ -9,6 +9,48 @@ const feedback = ref('')
 const tiePoints = ref([])
 const dyeSequence = ref([])
 const revealing = ref(false)
+
+// 选满 3 个扎结点后归类的扎结法（类型+色带宽度+倾斜角度）
+const tieResult = computed(() => (tiePoints.value.length === 3 ? classifyTie(tiePoints.value) : null))
+const dyeName = computed(() => (dyeSequence.value.length === 3 ? dyeSequence.value.map((c) => COLOR_NAMES[c]).join(' · ') : ''))
+
+// 预览和最终成品共用同一个连续渐变，避免新增颜色没有样式或条纹出现断接。
+function createFabricStyle(tie, sequence) {
+  const base = '#f5f0e6'
+  const colors = sequence.map((color) => COLOR_HEX[color]).filter(Boolean)
+  if (!colors.length) {
+    return { backgroundColor: base, backgroundImage: `repeating-linear-gradient(135deg, ${base} 0 50%, #fffaf0 50% 100%)` }
+  }
+
+  const widthRatio = tie?.widthRatio || 0.26
+  const angle = tie?.angle || 35
+  // 整块布只生成一次连续渐变，不使用 repeating-linear-gradient，避免斜纹平铺时出现拼接缝。
+  const repeatCount = 7
+  const band = 2.8 + widthRatio * 2
+  const gap = tie?.type === 'scatter' ? 1.6 : 1.05 + (0.45 - widthRatio)
+  const cycle = 100 / repeatCount
+  const colorBand = Math.min(band, cycle / 3 - gap)
+  let cursor = 0
+  const stops = []
+  for (let repeat = 0; repeat < repeatCount; repeat += 1) {
+    colors.forEach((color) => {
+      stops.push(`${color} ${cursor}% ${cursor + colorBand}%`)
+      cursor += colorBand
+      stops.push(`${base} ${cursor}% ${cursor + gap}%`)
+      cursor += gap
+    })
+  }
+  stops.push(`${base} ${cursor}% 100%`)
+  return {
+    backgroundColor: base,
+    backgroundImage: `linear-gradient(${angle}deg, ${stops.join(', ')})`,
+  }
+}
+
+const fabricStyle = computed(() => createFabricStyle(tieResult.value, dyeSequence.value))
+const miniFabricStyle = computed(() => createFabricStyle(tieResult.value, dyeSequence.value))
+
+const fabricClass = computed(() => (tieResult.value ? `silk-fabric--${tieResult.value.type}` : ''))
 
 const title = computed(() => ({
   pattern: '第一步 · 认识纹样',
@@ -20,7 +62,7 @@ const title = computed(() => ({
 const description = computed(() => ({
   pattern: '观察纹样的流动感、连续性与对称关系，选出最符合艾德莱斯绸特征的一项。',
   tying: '选择三个位置进行扎结。被扎紧的区域不会完全着色，展开后会形成富有节奏的留白。',
-  dyeing: '颜色由深及暖逐层进入丝线。按照老师傅提示的顺序点击染缸。',
+  dyeing: '从六种颜色里选三种，顺序随意。选的颜色和顺序会直接决定成品绸的色彩布局。',
   reveal: '每一次扎结和染色都已留在丝线中。现在，慢慢展开它。',
 }[props.step]))
 
@@ -51,7 +93,12 @@ function chooseDye(color) {
 
 function revealSilk() {
   revealing.value = true
-  window.setTimeout(() => emit('reveal-complete'), 1800)
+  window.setTimeout(() => emit('reveal-complete', {
+    style: fabricStyle.value,
+    className: fabricClass.value,
+    colors: [...dyeSequence.value],
+    tie: tieResult.value,
+  }), 1800)
 }
 </script>
 
@@ -100,25 +147,34 @@ function revealSilk() {
       </div>
 
       <div v-else-if="step === 'dyeing'" class="dye-workspace">
-        <div class="mini-silk" :class="dyeSequence.map((color) => `has-${color}`)"></div>
+        <div class="mini-silk" :style="miniFabricStyle"></div>
         <div class="dye-vats">
           <button v-for="vat in [
             { id: 'indigo', name: '靛蓝', note: '沉静的底色' },
             { id: 'red', name: '绛红', note: '热烈的脉络' },
             { id: 'yellow', name: '暖黄', note: '明亮的点缀' },
+            { id: 'green', name: '翠绿', note: '生机的绿意' },
+            { id: 'purple', name: '茄紫', note: '神秘的深紫' },
+            { id: 'orange', name: '橘橙', note: '温暖的橘色' },
           ]" :key="vat.id" :class="['dye-vat', `dye-vat--${vat.id}`, { used: dyeSequence.includes(vat.id) }]" type="button" @click="chooseDye(vat.id)">
             <i></i><strong>{{ vat.name }}</strong><small>{{ vat.note }}</small>
           </button>
         </div>
-        <div class="dye-order"><span v-for="(color, index) in ['靛蓝', '红色', '黄色']" :key="color" :class="{ done: dyeSequence.length > index }">{{ index + 1 }} · {{ color }}</span></div>
+        <div class="dye-order"><span v-for="(color, index) in dyeSequence" :key="index" :class="{ done: true }">{{ index + 1 }} · {{ COLOR_NAMES[color] }}</span><span v-if="dyeSequence.length < 3">? · 待选</span></div>
       </div>
 
       <div v-else class="reveal-workspace">
         <div :class="['silk-roll', { open: revealing }]">
           <div class="silk-roll__bar silk-roll__bar--top"></div>
-          <div class="silk-roll__fabric"><span>色彩的记忆</span></div>
+          <div :class="['silk-roll__fabric', fabricClass]" :style="fabricStyle">
+            <span>{{ revealing ? '色彩的记忆' : '展开绸布' }}</span>
+          </div>
           <div class="silk-roll__bar silk-roll__bar--bottom"></div>
         </div>
+        <p v-if="tieResult" class="reveal-summary">
+          <b>{{ TIE_TYPE_NAMES[tieResult.type] }}</b> · 经线留白 {{ tieResult.type === 'stripe' ? '聚成条纹' : tieResult.type === 'diagonal' ? '斜贯布面' : '散落成点' }}
+          <span v-if="dyeName">｜{{ dyeName }}层叠着色</span>
+        </p>
       </div>
 
       <div class="craft-panel__footer">

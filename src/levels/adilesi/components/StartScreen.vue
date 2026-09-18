@@ -18,7 +18,7 @@ defineEmits(['start', 'back'])
         <span>进入染坊</span>
         <small>ENTER THE WORKSHOP</small>
       </button>
-      <button class="back-button" type="button" @click="$emit('back')">← 返回地图</button>
+      <button class="back-button" type="button" @click="$emit('back')">← 返回菜单</button>
       <div class="start-screen__meta">
         <span>预计体验 3—7 分钟</span>
         <i></i>

@@ -17,11 +17,13 @@ export const cultureDiscoveries = {
     description: '柔韧、细密的丝线，是织造艾德莱斯绸的基础材料。',
     culture: '艾德莱斯采用经线扎染：先扎结经线，再分层染色，最后织造成绸。纹样因此带有自然晕染和流动边缘。',
     source: '文化来源：新疆传统丝织与经线扎染工艺',
+    image: '/assets/props/clue-silk-bundle.png',
   },
   pattern: {
     title: '艾德莱斯纹样样本',
     description: '蓝、红、黄相互衔接的流动几何纹样。',
     culture: '纹样并非印在成品表面，而是在经线阶段预先设计。染后的经线进入织机，最终组合成富有节奏的图案。',
     source: '文化来源：艾德莱斯绸纹样与分层染色技艺',
+    image: '/assets/props/clue-pattern-sample.png',
   },
 }

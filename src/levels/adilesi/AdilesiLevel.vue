@@ -27,6 +27,7 @@ const questDialogue = ref(null)
 const questDialogueEvent = ref(null)
 const cultureDiscovery = ref(null)
 const valvePuzzle = ref(false)
+const craftResult = ref({ style: {}, className: '' })
 const paused = ref(false)
 const exitConfirm = ref(false)
 const introCardVisible = ref(false)
@@ -114,12 +115,25 @@ function finishValvePuzzle() {
 function collectSilk(itemId) {
   const firstBundle = level.value.inventory.silk.length === 0
   send('COLLECT_SILK', { itemId })
+  // 每次拾取都播放收集音效，第一个额外弹出文化线索弹窗
+  const pickup = new Audio('/assets/audio/pickup.wav')
+  pickup.volume = 0.8
+  pickup.play().catch(() => {})
   if (firstBundle) cultureDiscovery.value = cultureDiscoveries.silk
 }
 
 function collectPattern() {
   send('COLLECT_PATTERN')
   cultureDiscovery.value = cultureDiscoveries.pattern
+}
+
+function finishReveal(result) {
+  craftResult.value = {
+    style: result?.style || {},
+    className: result?.className || '',
+  }
+  send('REVEAL_COMPLETED')
+  gameBus.emit('level-complete')
 }
 
 function openExitConfirm() {
@@ -147,6 +161,7 @@ function destroyGame() {
   questDialogue.value = null
   cultureDiscovery.value = null
   valvePuzzle.value = false
+  craftResult.value = { style: {}, className: '' }
   paused.value = false
   exitConfirm.value = false
 }
@@ -227,7 +242,7 @@ onBeforeUnmount(() => {
 
       <DialoguePanel v-if="step === LEVEL_STEPS.DIALOGUE" @complete="finishDialogue" />
       <QuestDialogue
-        v-if="questDialogue"
+        v-if="questDialogue && step !== LEVEL_STEPS.DIALOGUE"
         :scene="questDialogue"
         :portrait="questDialogue.portrait"
         @complete="finishQuestDialogue"
@@ -247,11 +262,13 @@ onBeforeUnmount(() => {
         @pattern-complete="send('PATTERN_COMPLETED')"
         @tying-complete="send('TYING_COMPLETED')"
         @dyeing-complete="send('DYEING_COMPLETED')"
-        @reveal-complete="send('REVEAL_COMPLETED'); gameBus.emit('level-complete')"
+        @reveal-complete="finishReveal"
       />
       <RewardPanel
         v-if="step === LEVEL_STEPS.REWARD || step === LEVEL_STEPS.COMPLETE"
         :complete="step === LEVEL_STEPS.COMPLETE"
+        :fabric-style="craftResult.style"
+        :fabric-class="craftResult.className"
         @accept="send('REWARD_ACCEPTED')"
         @return="returnToTitle"
       />

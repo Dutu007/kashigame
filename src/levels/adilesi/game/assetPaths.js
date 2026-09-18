@@ -13,13 +13,19 @@ export const assets = {
   vatYellow: `${root}/props/vat-yellow.png`,
   platformWood: `${root}/props/platform-wood.png`,
   platformStone: `${root}/props/platform-stone.png`,
-  silkBlue: `${root}/props/silk-blue.png`,
-  silkRed: `${root}/props/silk-red.png`,
-  silkGold: `${root}/props/silk-gold.png`,
-  patternSample: `${root}/props/pattern-sample.png`,
+  silkBlue: `${root}/props/clue-silk-bundle.png`,
+  silkRed: `${root}/props/clue-silk-bundle.png`,
+  silkGold: `${root}/props/clue-silk-bundle.png`,
+  patternSample: `${root}/props/clue-pattern-sample.png`,
   waterValve: `${root}/props/water-valve.png`,
 }
 
 export function framePath(animation, frame) {
   return `${root}/characters/player/${animation}-${String(frame).padStart(2, '0')}.png`
+}
+
+export const audioAssets = {
+  jumpWhoosh: `${root}/audio/jump-whoosh.wav`,
+  pickup: `${root}/audio/pickup.wav`,
+  ambient: `${root}/audio/ambient-wind-fire.wav`,
 }
