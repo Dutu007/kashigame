@@ -116,7 +116,7 @@ function collectSilk(itemId) {
   const firstBundle = level.value.inventory.silk.length === 0
   send('COLLECT_SILK', { itemId })
   // 每次拾取都播放收集音效，第一个额外弹出文化线索弹窗
-  const pickup = new Audio('/assets/audio/pickup.wav')
+  const pickup = new Audio('/assets/audio/sfx/pickup.wav')
   pickup.volume = 0.8
   pickup.play().catch(() => {})
   if (firstBundle) cultureDiscovery.value = cultureDiscoveries.silk

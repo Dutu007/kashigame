@@ -6,7 +6,7 @@ defineEmits(['close'])
 
 onMounted(() => {
   // 线索入手的清脆拾取音效，与"放大+高亮"同时发生
-  const pickup = new Audio('/assets/audio/pickup.wav')
+  const pickup = new Audio('/assets/audio/sfx/pickup.wav')
   pickup.volume = 0.8
   pickup.preload = 'auto'
   pickup.setAttribute('data-pickup', 'true')

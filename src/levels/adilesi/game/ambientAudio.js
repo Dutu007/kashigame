@@ -3,7 +3,7 @@ let audio = null
 
 export function playAmbient() {
   if (audio) return
-  audio = new Audio('/assets/audio/ambient-wind-fire.wav')
+  audio = new Audio('/assets/audio/sfx/ambient-wind-fire.wav')
   audio.loop = true
   audio.volume = 0.4
   audio.preload = 'auto'

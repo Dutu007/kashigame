@@ -25,7 +25,7 @@ export function framePath(animation, frame) {
 }
 
 export const audioAssets = {
-  jumpWhoosh: `${root}/audio/jump-whoosh.wav`,
-  pickup: `${root}/audio/pickup.wav`,
-  ambient: `${root}/audio/ambient-wind-fire.wav`,
+  jumpWhoosh: `${root}/audio/sfx/jump-whoosh.wav`,
+  pickup: `${root}/audio/sfx/pickup.wav`,
+  ambient: `${root}/audio/sfx/ambient-wind-fire.wav`,
 }
