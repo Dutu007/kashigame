@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+<title>时间织城 · 第二关 坎儿井（灰盒版）</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0d0906; overflow: hidden; }
+  #game { width: 100vw; height: 100vh; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script src="js/phaser.min.js"></script>
+<script src="js/main.js?v=79"></script>
+<script src="js/LadderWorkshop.js?v=7"></script>
+<script src="js/LampForming.js?v=2"></script>
+<script src="js/LampAssemblyLayout.js?v=1"></script>
+<script src="js/LampFiring.js?v=1"></script>
+<script src="js/LampWorkshop.js?v=26"></script>
+<script src="js/ui.js?v=72"></script>
+<script src="js/SurfaceScene.js?v=54"></script>
+<script src="js/TunnelScene.js?v=63"></script>
+<script src="js/game.js?v=48"></script>
+<!-- 开发入口：自动加载土陶主体位置调整工具（tmp/place-tuner.js）。
+     触发条件：地址带 ?tools=1，或在 F2 面板里点过该按钮（记在 localStorage.twc_tools）。
+     带 ?tools=0 可强制关掉并清除记忆。它只做覆盖层预览，不改动游戏状态；发布前删掉这段即可。 -->
+<script>
+(function () {
+  var q = location.search;
+  var on = q.indexOf('tools=1') >= 0;
+  if (q.indexOf('tools=0') >= 0) {
+    try { localStorage.removeItem('twc_tools'); } catch (e) {}
+  } else if (!on) {
+    try { on = localStorage.getItem('twc_tools') === '1'; } catch (e) {}
+  } else {
+    try { localStorage.setItem('twc_tools', '1'); } catch (e) {}
+  }
+  if (!on) return;
+  var s = document.createElement('script');
+  s.src = 'tmp/place-tuner.js?v=' + Date.now();
+  document.body.appendChild(s);
+})();
+</script>
+</body>
+</html>
