@@ -1,71 +1,92 @@
 # 时间织城 · 第二关「坎儿井」
 
-基于 [Phaser 3](https://phaser.io/) 的横版 2D 关卡原型（灰盒版）：地表场景 + 坎儿井井下探索、
-陶灯制作与点灯、暗渠淤堵修复等多段玩法。纯前端、零构建，直接用浏览器打开即可运行。
+基于 Phaser 3 的横版 2D 关卡原型。玩家在地表制作绳梯和陶灯，依次检查三段暗渠，完成清淤、修渠、复查和汇报。项目是纯前端静态页面，无需安装 npm 依赖或构建，通过本地 HTTP 服务运行。
 
-## 快速开始
+## 启动
 
-方式一（推荐，禁用缓存，刷新必定拿到最新文件）：
+需要 Python 3 和现代浏览器。在项目根目录执行：
 
 ```bash
 python server.py 8080
-# 然后浏览器打开 http://localhost:8080/
 ```
 
-方式二：Windows 下双击 `启动游戏.bat`（端口已被占用时不会重复启动，只打开页面）。
+然后打开 [游戏页面](http://localhost:8080/)。Windows 也可双击 [启动游戏.bat](启动游戏.bat)；8080 端口已有服务时，启动脚本只打开页面。开发服务器禁用缓存，修改后刷新即可。
 
-> 不要直接双击 `index.html`：Phaser 加载图片素材属于跨域请求，`file://` 协议下会被浏览器拦截，
-> 必须经由本地 HTTP 服务访问。
+不要直接双击 `index.html`，浏览器会限制 `file://` 下的素材加载。
 
 ## 操作
 
 | 按键 | 作用 |
 | --- | --- |
-| `A` / `D` | 左右移动 |
-| `空格` | 跳跃 |
-| `E` | 互动 / 推进对话 |
-| `Shift` | 加速（调试用） |
-| `F2` | 打开调试面板 |
+| `A` / `D` 或左右方向键 | 移动 |
+| `空格` | 跳跃；对话中补完文字或推进 |
+| `E` | 互动、推进对话；转盘工序中按住控制转速 |
+| `F` | 井下开关油灯 |
+| `Esc` | 退出制作、修渠或局部清淤作业 |
+| `Shift` | 移动速度 ×3，供调试使用 |
+| `F2` | 开关剧情调试面板 |
 
-## 目录结构
+小游戏的鼠标、方向键和回车操作以当前界面提示为准。完整流程见 [当前游戏说明](docs/游戏说明.md)。
 
+## 目录
+
+```text
+index.html                 页面入口，按依赖顺序加载脚本
+server.py                  禁用缓存的本地静态服务器
+启动游戏.bat               Windows 启动入口
+js/
+  main.js                  常量、状态、存档、对白、场景配置与素材加载
+  SurfaceScene.js          地表探索、材料收集、井口与制作入口
+  TunnelScene.js           井下移动、照明、清淤、修渠入口与复查
+  LadderWorkshop.js        绳梯装配、绑结与承重测试
+  LampWorkshop.js          和泥、灯嘴与把手拼接、陶灯工序协调
+  LampForming.js           转盘成型与成型帧处理
+  LampFiring.js            守窑烧制
+  LampAssemblyLayout.js    游戏和校准工具共用的油灯布局、接缝参数
+  UISkin.js                UI 素材加载、有效区域裁切和边框缩放
+  ui.js                    对话、通知、工作台、修渠与调试面板
+  game.js                  Phaser 配置与场景注册
+  phaser.min.js            本地 Phaser 引擎
+map-assets/                游戏实际使用的图片
+UIdesign/                  UI 设计源图、当前素材目录与处理参数
+tools/                     可复用的位置和拼接校准工具
+tests/                     制作玩法的 Node 单元测试
+docs/
+  游戏说明.md              当前主线、小游戏、存档与实现边界
+  素材说明.md              当前素材用途、加载位置与维护方式
 ```
-index.html            页面入口，按顺序加载 js/ 下各模块
-server.py             开发用静态服务器（禁用缓存，可指定端口）
-启动游戏.bat          Windows 一键启动
-js/                   游戏源码
-  main.js             常量、全局状态 G、工具函数
-  SurfaceScene.js     地表场景（守井人、土陶作坊、水井）
-  TunnelScene.js      井下场景（坎儿井暗渠、淤堵修复、点灯）
-  LadderWorkshop.js   木梯子制作
-  LampForming.js      陶灯塑形
-  LampFiring.js       陶灯烧制
-  LampAssemblyLayout.js  陶灯部件装配布局
-  LampWorkshop.js     陶灯作坊主逻辑
-  ui.js               UI 组件（对话框、目标提示、弹窗）
-  game.js             游戏配置与场景注册
-  phaser.min.js       Phaser 3 引擎
-map-assets/           全部美术素材（地表/井下背景、道具、UI 九宫格等）
-tests/                Node 单元测试（制作类玩法数值与流程）
-UIdesign/            界面设计稿
-游戏说明.md            玩法与设计说明
-时间织城_第二关坎儿井_完整确定方案_V1.0.docx   关卡完整设计方案
-水脉任务剧情草案.md / _v0.2.md                 剧情草案
-```
 
-## 跑测试
+## 测试
+
+安装支持 `node:test` 的 Node.js 后，在项目根目录执行：
 
 ```bash
-node tests/lamp-forming.test.cjs
-node tests/lamp-firing.test.cjs
-node tests/lamp-craft.test.cjs
-node tests/ladder-craft.test.cjs
+node --test tests/*.test.cjs
 ```
 
-## 开发提示
+测试覆盖绳梯装配与承重、和泥与拼接、转盘成型、烧制、制作进度恢复，以及首次布梯和重复下井的存档位置。修改素材路径后，还应在浏览器检查地表、井下和三个工作台是否正常加载。
 
-- 素材与脚本都走相对路径，新增 js 模块后记得在 `index.html` 里加一行 `<script>`；
-  改完推荐顺手把该行末尾的 `?v=N` 数字加一，避免浏览器拿到旧文件。
-- 摆件位置微调工具：访问 `http://localhost:8080/?tools=1`，或按 `F2` 在调试面板里开启（会记在
-  `localStorage`）；`?tools=0` 可关闭并清除记忆。
-- `tmp/`、`output/`、`rubbish/` 都是本地调试产物，已在 `.gitignore` 中忽略，不入库。
+## 调试与校准
+
+| 入口 | 用途 |
+| --- | --- |
+| `/?reset=1` | 清除主线存档，从头开始 |
+| `/?timeoutloop=1` | 用定时器驱动游戏主循环 |
+| `F2` | 12 个剧情测试状态，包括陶灯制作和转盘成型入口；跳转会改写主线存档 |
+| `/?tools=1` | 加载陶泥主体位置工具；也可从 F2 面板开启 |
+| `/?tools=0` | 关闭位置工具并清除自动开启记忆 |
+| [油灯拼接校准](tools/assembly-tuner.html) | 调整灯身、灯嘴、把手的布局、接缝与颜色，导出参数回填 `js/LampAssemblyLayout.js` |
+| `/?wells=1` | 井口贴图校准：1/2/3 选井，方向键移动，Shift 细调，Q/A 缩放，C 切换状态 |
+| `/?ground=1&seg=UB&line=pre` | 地面线校准：鼠标编辑锚点，T 切换修复前后，P 输出参数，X 恢复当前线默认值 |
+
+位置工具使用 `tools/place-tuner.js`；拼接工具与游戏共用成型帧和布局配置。两类工具不写入主线进度，拼接工具会在浏览器保存自己的校准参数。地面线参数只在校准模式覆盖运行值，确认后回填 `js/main.js`。
+
+浏览器控制台可通过 `window.__game`、`G.state`、`window.__errs` 查看游戏实例、状态和页面错误。主线存档键为 `twc_l2_save`。
+
+## 维护
+
+- 新增模块时，在 `index.html` 按依赖顺序加入脚本。修改脚本后递增对应的 `?v=N`。
+- 修改场景或道具图片后递增 `js/main.js` 的 `ASSET_V`；UI 图片的缓存版本在 `js/UISkin.js` 中。
+- UI 源图与当前用途见 [素材目录](UIdesign/catalog.html)，处理参数统一保存在 `UIdesign/processing.json`。
+- 临时截图、日志和一次性脚本放入 `output/` 或 `tmp/`，这些目录已忽略。可复用工具放入 `tools/`。
+- 文档描述当前实现。改动玩法后同步更新 [游戏说明](docs/游戏说明.md)，素材变更同步更新 [素材说明](docs/素材说明.md)。

@@ -54,13 +54,13 @@ class DialogueBox {
     this.lines = []; this.idx = 0; this.typing = false; this.typeEvent = null;
     this.isOpen = false; this.openAt = -1e9; this.closedAt = -1e9; this.onDone = null;
 
-    const bw = 1320, bh = 548;
+    const bw = 1580, bh = 395;
     const bx = (VIEW_W - bw) / 2, by = VIEW_H - bh - 36;
     this.boxRect = { bx, by, bw, bh };
 
     // 新版对话框是一张完整构图底图，灯笼、花纹、城市和正文留白保持整体关系。
-    this.panel = scene.add.image(VIEW_W / 2, by + bh / 2, 'UI_DIALOG_FRAME')
-      .setDisplaySize(bw, bh).setDepth(100).setVisible(false);
+    this.panel = skinImage(scene, 'dialogue', VIEW_W / 2, by + bh / 2, bw, bh)
+      .setDepth(100).setVisible(false);
 
     // 名牌（参考图样式1：左上红砖底名牌）
     this.plateG = scene.add.graphics().setDepth(101).setVisible(false);
@@ -68,14 +68,14 @@ class DialogueBox {
       fontFamily: FONT, fontSize: '30px', color: UI_COLORS.cream, resolution: 2,
     }).setOrigin(0.5).setDepth(102).setVisible(false);
 
-    this.text = scene.add.text(bx + 320, by + 194, '', {
+    this.text = scene.add.text(bx + 245, by + 135, '', {
       fontFamily: FONT, fontSize: '31px', color: UI_COLORS.ink,
-      wordWrap: { width: 820, useAdvancedWrap: true }, lineSpacing: 14, resolution: 2,
+      wordWrap: { width: 1110, useAdvancedWrap: true }, lineSpacing: 14, resolution: 2,
     }).setDepth(101).setVisible(false);
 
     // 继续箭头（参考图右下金色小箭头）
-    this.arrow = scene.add.text(bx + bw - 52, by + bh - 48, '▼', {
-      fontFamily: FONT, fontSize: '24px', color: '#c9973f', resolution: 2,
+    this.arrow = scene.add.text(bx + bw - 480, by + bh - 88, 'E / 空格  继续 ▸', {
+      fontFamily: FONT, fontSize: '20px', color: '#74512d', resolution: 2,
     }).setDepth(101).setVisible(false);
     this.arrow.setVisible(false);
   }
@@ -95,7 +95,7 @@ class DialogueBox {
     this.nameText.setVisible(!!sp.plate);
     if (sp.plate) {
       const { bx, by } = this.boxRect;
-      this.nameText.setPosition(bx + 390, by + 100).setText(sp.name);
+      this.nameText.setPosition(bx + 375, by + 46).setText(sp.name);
     }
     this.text.setVisible(true);
     this.arrow.setVisible(false);
@@ -107,7 +107,7 @@ class DialogueBox {
       delay: 26, repeat: Math.ceil(full.length / 2), callback: () => {
         i = Math.min(full.length, i + 2);
         this.text.setText(full.slice(0, i));
-        if (i >= full.length) { this.typing = false; }
+        if (i >= full.length) { this.typing = false; this.arrow.setVisible(true); }
       },
     });
   }
@@ -117,7 +117,7 @@ class DialogueBox {
     if (this.typing) { // 立即补完
       if (this.typeEvent) this.typeEvent.remove();
       this.text.setText(this.lines[this.idx].t);
-      this.typing = false;
+      this.typing = false; this.arrow.setVisible(true);
       return;
     }
     this.idx++;
@@ -139,15 +139,12 @@ class Toast {
   constructor(scene) {
     this.scene = scene; this.queue = []; this.busy = false;
     this.root = scene.add.container(0, 0).setDepth(110);
-    const g = scene.add.graphics();
-    ornateFrame(g, 0, 0, 660, 82, { fill: 0x14332e, accent: UI_COLORS.red, radius: 14, outerWidth: 2 });
-    g.fillStyle(UI_COLORS.gold, 1)
-      .fillTriangle(54, 20, 68, 41, 54, 62).fillTriangle(40, 41, 54, 20, 54, 62);
-    this.titleT = scene.add.text(96, 14, '', {
-      fontFamily: FONT, fontSize: '27px', color: '#e8c979', resolution: 2,
+    const g = skinFrame(scene, 'panel', 0, 0, 780, 120, { cuts: [0.18, 0.18, 0.25, 0.24] });
+    this.titleT = scene.add.text(120, 31, '', {
+      fontFamily: FONT, fontSize: '27px', color: UI_COLORS.ink, resolution: 2,
     });
-    this.subT = scene.add.text(96, 49, '', {
-      fontFamily: FONT, fontSize: '20px', color: '#d8cdb2', resolution: 2,
+    this.subT = scene.add.text(120, 68, '', {
+      fontFamily: FONT, fontSize: '20px', color: '#74512d', resolution: 2,
     });
     this.root.add([g, this.titleT, this.subT]);
     this.root.setAlpha(0);
@@ -157,10 +154,10 @@ class Toast {
     if (this.busy || !this.queue.length) return;
     this.busy = true;
     const { title, sub } = this.queue.shift();
-    this.titleT.setText(title); this.subT.setText(sub);
-    this.root.setPosition((VIEW_W - 660) / 2, -90);
+    fitUIText(this.titleT.setText(title), 565, 34, 27); fitUIText(this.subT.setText(sub), 565, 28, 20, 16);
+    this.root.setPosition((VIEW_W - 780) / 2, -130);
     this.scene.tweens.add({
-      targets: this.root, alpha: 1, y: 96, duration: 260, ease: 'Cubic.out',
+      targets: this.root, alpha: 1, y: 110, duration: 260, ease: 'Cubic.out',
       onComplete: () => {
         this.scene.time.delayedCall(2100, () => {
           this.scene.tweens.add({
@@ -185,18 +182,21 @@ class WorkshopModal {
     this.feedback = '';
     this.patchProgress = null;
     this.body = scene.add.container(0, 0).setDepth(303);
-    this.backdrop = scene.add.rectangle(VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, 0x071411, 0.84)
+    this.backdrop = scene.add.rectangle(VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, 0x071411, 0.78)
       .setDepth(300).setInteractive();
-    this.panel = scene.add.graphics().setDepth(301);
-    ornateFrame(this.panel, 210, 112, 1500, 856, { fill: 0xf7ecd4, accent: UI_COLORS.teal, radius: 20, outerWidth: 5 });
-    titleRibbon(this.panel, 250, 130, 460, 64, UI_COLORS.teal);
-    this.titleT = scene.add.text(480, 162, '', {
-      fontFamily: FONT, fontSize: '32px', color: UI_COLORS.cream, resolution: 2,
-    }).setOrigin(0.5, 0.5).setDepth(304);
-    this.stepT = scene.add.text(270, 220, '', {
+    this.panel = scene.add.container(0, 0).setDepth(301);
+    this.panel.add(skinImage(scene, 'workshop', 960, 542, 1540, 885));
+    this.panel.add(skinFrame(scene, 'card', 1250, 308, 428, 625, { scale: 0.10 }));
+    const detail = scene.add.graphics();
+    detail.lineStyle(1, UI_COLORS.gold, 0.55).lineBetween(285, 253, 1625, 253);
+    this.panel.add(detail);
+    this.titleT = scene.add.text(310, 163, '', {
+      fontFamily: UI_HEADING_FONT, fontSize: '40px', color: UI_COLORS.ink, resolution: 2,
+    }).setDepth(304);
+    this.stepT = scene.add.text(310, 213, '', {
       fontFamily: FONT, fontSize: '22px', color: '#2e6e63', resolution: 2,
     }).setDepth(304);
-    this.tipT = scene.add.text(1660, 220, 'Esc：退出', {
+    this.tipT = scene.add.text(1615, 217, 'Esc：退出', {
       fontFamily: FONT, fontSize: '22px', color: '#7a4a21', resolution: 2,
     }).setOrigin(1, 0).setDepth(304);
     this.body.add([]);
@@ -272,40 +272,35 @@ class WorkshopModal {
   label(text, x, y, style = {}) {
     const t = this.scene.add.text(x, y, text, {
       fontFamily: FONT, fontSize: style.fontSize || '27px', color: style.color || UI_COLORS.ink,
-      resolution: 2, align: style.align || 'left', wordWrap: style.wrap ? { width: style.wrap } : undefined,
+      resolution: 2, align: style.align || 'left', wordWrap: style.wrap ? { width: style.wrap, useAdvancedWrap: true } : undefined,
     }).setOrigin(style.align === 'center' ? 0.5 : (style.align === 'right' ? 1 : 0), 0).setDepth(304);
     this.body.add(t); return t;
   }
 
   button(x, y, w, h, text, onClick, options = {}) {
-    const g = this.scene.add.graphics().setDepth(304);
-    titleRibbon(g, x - w / 2, y - h / 2, w, h, options.fill || UI_COLORS.teal);
+    const secondary = options.fill === UI_COLORS.red || options.fill === 0x8a6a2f;
+    const g = skinFrame(this.scene, 'confirm', x - w / 2 - 9, y - h / 2 - 8, w + 18, h + 16,
+      { frame: secondary ? 'gold' : 'teal', cuts: [0.14, 0.14, 0.25, 0.25], scale: 0.7 }).setDepth(304);
+    // Clip the paper surrounding the extracted button to its six-sided silhouette.
+    const maskG = this.scene.make.graphics({ add: false });
+    const left = x - w / 2 - 9, top = y - h / 2 - 8, mw = w + 18, mh = h + 16;
+    const points = [[0.006, 0.5], [0.10, 0.035], [0.90, 0.035], [0.994, 0.5], [0.90, 0.945], [0.10, 0.945]];
+    maskG.fillStyle(0xffffff).fillPoints(points.map(([px, py]) => ({ x: left + px * mw, y: top + py * mh })), true);
+    const mask = maskG.createGeometryMask();
+    g.setMask(mask);
+    g.once('destroy', () => { mask.destroy(); maskG.destroy(); });
     const bg = this.scene.add.zone(x, y, w, h).setInteractive({ useHandCursor: true });
     const tx = this.scene.add.text(x, y, text, {
-      fontFamily: FONT, fontSize: options.fontSize || '25px', color: options.color || '#f7ecd4',
+      fontFamily: UI_HEADING_FONT, fontSize: options.fontSize || '25px', color: options.color || (secondary ? UI_COLORS.ink : '#f7ecd4'),
       resolution: 2, align: 'center', wordWrap: { width: w - 28, useAdvancedWrap: true },
     }).setOrigin(0.5).setDepth(305);
+    fitUIText(tx, w - 64, h - 14, parseInt(options.fontSize || '25'), 18);
+
+    bg.on('pointerover', () => { g.setAlpha(0.82); });
+    bg.on('pointerout', () => { g.setAlpha(1); });
     bg.on('pointerdown', () => { if (this.opened) onClick(); });
     this.body.add([g, bg, tx]);
     return bg;
-  }
-
-  card(x, y, w, h, title, sub, done, onClick) {
-    const bg = this.scene.add.graphics().setDepth(304);
-    ornateFrame(bg, x - w / 2, y - h / 2, w, h, {
-      fill: done ? 0xd8e2c7 : 0xe8d9b0,
-      accent: done ? UI_COLORS.teal : UI_COLORS.red,
-      radius: 10, outerWidth: 3,
-    });
-    bg.setInteractive(new Phaser.Geom.Rectangle(x - w / 2, y - h / 2, w, h), Phaser.Geom.Rectangle.Contains);
-    const t = this.scene.add.text(x, y - 20, title, {
-      fontFamily: FONT, fontSize: '28px', color: UI_COLORS.ink, resolution: 2,
-    }).setOrigin(0.5).setDepth(305);
-    const s = this.scene.add.text(x, y + 26, done ? '已检查' : sub, {
-      fontFamily: FONT, fontSize: '21px', color: done ? '#2e6e63' : '#7a4a21', resolution: 2,
-    }).setOrigin(0.5).setDepth(305);
-    bg.on('pointerdown', () => { if (this.opened) onClick(); });
-    this.body.add([bg, t, s]);
   }
 
   render() {
@@ -317,6 +312,8 @@ class WorkshopModal {
     if (this.kind === 'ladder') this.ladderGame.render();
     else if (this.kind === 'lamp') this.lampGame.render();
     else this.renderPatch();
+    const board = this.kind === 'patch' ? [286, 316, 848, 508] : [254, 306, 992, 584];
+    this.body.add(skinFrame(this.scene, 'card', ...board, { hollow: true, scale: 0.07 }));
   }
 
   // -------- UC 补口小游戏：独立修渠工作台 --------
@@ -458,10 +455,10 @@ class WorkshopModal {
       });
       this.scene.input.setDraggable(img);
       this.body.add(img);
-      this.label(s.name, 1600, s.y + 5, { align: 'center', fontSize: '20px', color: '#6b472a' }).setDepth(309);
+      this.label(s.name, 1600, s.y - 12, { align: 'center', fontSize: '20px', color: '#6b472a' }).setDepth(309);
     });
     this.refreshStoneRing();
-    this.patchSidePanel('排石记录', `${this.patchSlots.filter(v => v != null).length}/3 块到位`, '石头要互相卡住，不能只靠湿泥。', 320);
+    this.patchSidePanel('排石记录', `${this.patchSlots.filter(v => v != null).length}/3 块到位`, '石头要互相卡住，不能只靠湿泥。', 345);
   }
 
   destroyPatchAssist() { // 场景级辅助高亮的清理（随 render/关闭）
@@ -674,7 +671,7 @@ class DebugPanel {
     this.root.add(scene.add.text(px + w - 24, py + 22, 'F2 开/关', {
       fontFamily: FONT, fontSize: '18px', color: '#d8cdb2', resolution: 2,
     }).setOrigin(1, 0));
-    // 开发入口：一键加载土陶主体位置调整工具（tmp/place-tuner.js，独立覆盖层，不改游戏状态）。
+    // 开发入口：一键加载土陶主体位置调整工具（tools/place-tuner.js，独立覆盖层，不改游戏状态）。
     // 点过之后记住开关，普通刷新（不带 ?tools=1）也会自动加载；再点一次关闭。
     const toolOn = () => { try { return localStorage.getItem('twc_tools') === '1'; } catch (e) { return false; } };
     const toolBtn = scene.add.graphics();
@@ -690,8 +687,8 @@ class DebugPanel {
       }
       try { localStorage.setItem('twc_tools', '1'); } catch (e) {}
       const s = document.createElement('script');
-      s.src = 'tmp/place-tuner.js?v=' + Date.now();
-      s.onerror = () => { if (G.ui) G.ui.toast.show('加载失败', '请确认 tmp/place-tuner.js 存在，且用开发服务器打开'); };
+      s.src = 'tools/place-tuner.js?v=' + Date.now();
+      s.onerror = () => { if (G.ui) G.ui.toast.show('加载失败', '请确认 tools/place-tuner.js 存在，且用开发服务器打开'); };
       document.body.appendChild(s);
     });
     this.root.add(toolBtn);
@@ -749,24 +746,28 @@ class UIScene extends Phaser.Scene {
     this.debugPanel = new DebugPanel(this);
 
     // 目标追踪（左上羊皮纸签：宽度随文本自适应，避免溢出）
-    this.trackerPanel = this.add.graphics().setDepth(90);
-    this.trackerT = this.add.text(78, 46, '', {
-      fontFamily: FONT, fontSize: '25px', color: UI_COLORS.ink, resolution: 2,
-    }).setOrigin(0, 0.5).setDepth(91);
+    this.trackerPanel = skinFrame(this, 'goal', 24, 12, 640, 100, { cuts: [0.26, 0.12, 0.3, 0.3] }).setDepth(310);
+    this.trackerT = this.add.text(132, 62, '', {
+      fontFamily: FONT, fontSize: '25px', color: UI_COLORS.cream, resolution: 2,
+    }).setOrigin(0, 0.5).setDepth(311);
 
     // 操作提示（右上）
-    this.hintT = this.add.text(VIEW_W - 26, 46, '', {
-      fontFamily: FONT, fontSize: '21px', color: '#d8cdb2', resolution: 2,
-    }).setOrigin(1, 0.5).setDepth(91);
-    this.hintT.setStroke('#1a120b', 4);
+    this.hintPanel = skinFrame(this, 'notice', VIEW_W - 770, 22, 746, 78, { cuts: [0.25, 0.14, 0.3, 0.3] }).setDepth(310);
+    this.hintT = this.add.text(VIEW_W - 88, 62, '', {
+      fontFamily: FONT, fontSize: '21px', color: UI_COLORS.ink, resolution: 2,
+    }).setOrigin(1, 0.5).setDepth(311);
+
 
     this.setGoal = t => {
       this.trackerT.setText('目标：' + t);
-      const w = Math.min(VIEW_W - 40, Math.ceil(this.trackerT.width) + 118);
-      const tg = this.trackerPanel.clear();
-      ornateFrame(tg, 20, 18, w, 58, { fill: UI_COLORS.paper, accent: UI_COLORS.teal, radius: 12, outerWidth: 2 });
+      fitUIText(this.trackerT, 815, 44, 25, 19);
+      const w = Math.max(530, Math.min(970, Math.ceil(this.trackerT.width) + 166));
+      this.trackerPanel.resize(w, 100);
     };
-    this.setHint = t => this.hintT.setText(t);
+    this.setHint = t => {
+      fitUIText(this.hintT.setText(t), 580, 40, 21, 16);
+      this.hintPanel.setVisible(!!t);
+    };
     G.ui = {
       dialogue: this.dialogue,
       toast: this.toast,

@@ -1,7 +1,7 @@
 // ============================================================
 // 时间织城 · 第二关 坎儿井 —— 灰盒版
-// 批次A：地表闭环 + 批次B：照明雏形 + 批次C：清淤/补口/复查
-// 依据《时间织城_第二关坎儿井_完整确定方案_V1.0》
+// 地表探索、绳梯与陶灯制作、井下清淤、修渠与复查
+// 当前玩法说明：docs/游戏说明.md
 // ============================================================
 
 // 逻辑画布 3072×1024（§02）；渲染分辨率 1920×1080（FIT 缩放到窗口，保证文字清晰）
@@ -256,9 +256,6 @@ const LINES = {
     { s: 'aide', t: '这段没有看到大裂口。水是从上游过来的，问题应该在更后面。' },
     { s: 'aysu', t: '记下来。我们回地面，清理第二口井，再看下一段。' },
   ],
-  uaNotInspected: [
-    { s: 'aide', t: '先检查这段的水痕和水流，不能只看一眼就回去。' },
-  ],
   shaftClosed: [
     { s: 'aysu', t: '这口井没有布梯，上不去。' },
   ],
@@ -268,6 +265,7 @@ const LINES = {
 class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() {
+    loadUISkin(this);
     const bar = this.add.graphics();
     this.add.text(VIEW_W / 2, VIEW_H / 2 - 40, '正在加载……', {
       fontFamily: FONT, fontSize: '24px', color: '#e8d9b0',
@@ -280,7 +278,6 @@ class BootScene extends Phaser.Scene {
     this.load.image('LADDER_TABLE', `map-assets/LADDER_TABLE.png?v=${ASSET_V}`);
     this.load.image('LADDER_RUNG', `map-assets/LADDER_RUNG.png?v=${ASSET_V}`);
     this.load.image('LADDER_BAG', `map-assets/LADDER_BAG.png?v=${ASSET_V}`);
-    this.load.image('POTTERY_KNEADING', `map-assets/POTTERY_KNEADING.png?v=${ASSET_V}`);
     this.load.image('POTTERY_TABLE', `map-assets/POTTERY_TABLE.png?v=${ASSET_V}`);
     this.load.image('POTTERY_KILN', `map-assets/POTTERY_KILN.png?v=${ASSET_V}`);
     this.load.image('POTTERY_FORMING_SOURCE', `map-assets/POTTERY_FORMING_V1.png?v=${ASSET_V}`);
@@ -294,9 +291,6 @@ class BootScene extends Phaser.Scene {
     this.load.image('POTTERY_CLAY_READY', `map-assets/POTTERY_CLAY_V2/POTTERY_CLAY_V2_READY.png?v=${ASSET_V}`);
     this.load.image('POTTERY_LAMP_SPOUT_RAW', `map-assets/POTTERY_LAMP_SPOUT_RAW.png?v=${ASSET_V}`);
     this.load.image('POTTERY_LAMP_HANDLE_RAW', `map-assets/POTTERY_LAMP_HANDLE_RAW.png?v=${ASSET_V}`);
-    this.load.image('UI_DIALOG_LEFT', `map-assets/UI_RUNTIME/UI_DIALOG_LEFT.png?v=${ASSET_V}`);
-    this.load.image('UI_DIALOG_RIGHT', `map-assets/UI_RUNTIME/UI_DIALOG_RIGHT.png?v=${ASSET_V}`);
-    this.load.image('UI_DIALOG_FRAME', `map-assets/UI_RUNTIME/UI_DIALOG_FRAME_ALPHA_V2.png?v=${ASSET_V}`);
     this.load.image('MAP_UA', `map-assets/SCN_L2_UA.png?v=${ASSET_V}`);
     this.load.image('MAP_UB', `map-assets/SCN_L2_UB.png?v=${ASSET_V}`);
     this.load.image('MAP_UB_SILT', `map-assets/SCN_L2_UB_SILT.png?v=${ASSET_V}`);
@@ -315,6 +309,7 @@ class BootScene extends Phaser.Scene {
     this.load.image('WELL_W3', `map-assets/ENV_L2_WELL_W03_WEED.png?v=${ASSET_V}`);
   }
   create() {
+    prepareUISkin(this);
     // 使用透明素材中的实际物体区域，保留原始 PNG 与透明边缘。
     this.textures.get('LADDER_RUNG').add('craft', 0, 65, 230, 2040, 230);
     this.textures.get('LADDER_BAG').add('craft', 0, 118, 58, 1144, 1017);
@@ -345,13 +340,6 @@ class BootScene extends Phaser.Scene {
       g.fillStyle(0xc9973f, 1).fillRect(2, 26, 52, 8);
       g.lineStyle(3, 0x1f4038, 1).strokeRoundedRect(2, 2, 52, 180, 10);
     });
-    // 绳梯（布设后的地表/井下示意）
-    mk('ladder', 40, 160, g => {
-      g.lineStyle(5, 0x8a5a2b, 1);
-      g.lineBetween(6, 0, 6, 160); g.lineBetween(34, 0, 34, 160);
-      g.fillStyle(0xa5713a, 1);
-      for (let y = 14; y < 160; y += 30) g.fillRect(6, y, 28, 7);
-    });
     // 材料点标记（金色菱形，图标独立不烘焙，§18）
     mk('diamond', 26, 26, g => {
       g.fillStyle(0xc9973f, 1).fillTriangle(13, 1, 25, 13, 13, 25).fillTriangle(1, 13, 13, 1, 13, 25);
@@ -360,17 +348,5 @@ class BootScene extends Phaser.Scene {
     // 草屑/扬尘粒子
     mk('dust', 12, 12, g => g.fillStyle(0xd8b98a, 1).fillCircle(6, 6, 6));
     mk('grassbit', 10, 10, g => g.fillStyle(0x9a8a4a, 1).fillCircle(5, 5, 5));
-    // 交互提示底板
-    mk('chip', 480, 56, g => {
-      g.fillStyle(0xf7ecd4, 0.95).fillRoundedRect(0, 0, 480, 56, 14);
-      g.lineStyle(2, 0x7a4a21, 1).strokeRoundedRect(1, 1, 478, 54, 14);
-      g.fillStyle(0xc9973f, 1).fillTriangle(24, 16, 35, 28, 24, 40).fillTriangle(13, 28, 24, 16, 24, 40);
-    });
-    // 修补块（§14 P1/P2/P3 共用，形状由旋转区分）
-    mk('patchblock', 96, 28, g => {
-      g.fillStyle(0xb99a6d, 1).fillRoundedRect(1, 1, 94, 26, 6);
-      g.lineStyle(3, 0x6e5433, 1).strokeRoundedRect(1, 1, 94, 26, 6);
-      g.fillStyle(0x8f7448, 1).fillRect(8, 8, 80, 5);
-    });
   }
 }

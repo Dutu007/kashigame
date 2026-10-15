@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+  <title>油灯拼接 · 接缝与调色</title>
+  <link rel="stylesheet" href="assembly-tuner.css">
+</head>
+<body>
+  <header>
+    <div><h1>油灯拼接 · 接缝与调色</h1><p>调整接缝融合、零件颜色和布局。自动保存，完成后复制全部参数给助手。</p></div>
+    <a href="../" target="_blank" rel="noopener">打开游戏 ↗</a>
+  </header>
+  <main>
+    <section class="preview" aria-label="拼接效果预览">
+      <div class="preview-toolbar">
+        <label><input id="show-outline" type="checkbox" checked> 选中边框</label>
+        <label><input id="show-grid" type="checkbox"> 坐标网格</label>
+        <span id="load-status" role="status">正在加载游戏素材…</span>
+      </div>
+      <canvas id="preview" width="960" height="568" tabindex="0" aria-label="拖动调整灯身、灯嘴和把手"></canvas>
+      <p class="hint">点击零件选择并拖动。方向键微移 1；Shift ×5；Alt ×10；[ / ] 旋转。坐标、尺寸与游戏一致。</p>
+    </section>
+    <aside aria-label="调整参数">
+      <section aria-label="接缝模糊调整">
+        <h2>接缝融合与颜色</h2>
+        <label>接缝方式<select id="seam-method"><option value="feather">根部渐隐（保留壶身纹理）</option><option value="blur">原有局部模糊</option><option value="none">无接缝处理</option></select></label>
+        <label>调色对象<select id="seam-color-part"><option value="spout">灯嘴</option><option value="handle">把手</option></select></label>
+        <div class="field-grid">
+          <label>亮度（1 为原色）<input id="seam-brightness" type="number" min="0.3" max="1.5" step="0.02"></label>
+          <label>饱和度（1 为原色）<input id="seam-saturation" type="number" min="0" max="2" step="0.05"></label>
+        </div>
+        <label class="check"><input id="seam-color-preview" type="checkbox" checked> 启用调色</label>
+        <button id="seam-color-reset">恢复此零件原色</button>
+        <p class="hint">降低亮度让土色加深，降低饱和度可减弱橙色。当前采用已确认的亮度 0.74、饱和度 1，可继续调整。</p>
+        <label class="check"><input id="seam-mode" type="checkbox" checked> 拖动接缝区域（锁住零件位置）</label>
+        <label>选择接缝<select id="seam-select"><option value="0">灯嘴根部</option><option value="1">把手接脚一</option><option value="2">把手接脚二</option></select></label>
+        <label class="check"><input id="seam-preview" type="checkbox" checked> 启用接缝效果</label>
+        <label class="check"><input id="seam-outline" type="checkbox" checked> 显示接缝区域边框</label>
+        <div class="field-grid">
+          <label>渐隐强度（0～1）<input id="seam-edgeStrength" type="number" min="0" max="1" step="0.05"></label>
+          <label>渐隐柔和范围（0～1）<input id="seam-edgeFeather" type="number" min="0.01" max="1" step="0.05"></label>
+          <label>模糊半径（像素）<input id="seam-blur" type="number" min="0" max="20" step="0.5"></label>
+          <label>混合强度（0～1）<input id="seam-opacity" type="number" min="0" max="1" step="0.05"></label>
+          <label>区域中心 X（素材比例）<input id="seam-x" type="number" min="-1" max="2" step="0.01"></label>
+          <label>区域中心 Y（素材比例）<input id="seam-y" type="number" min="-1" max="2" step="0.01"></label>
+          <label>区域宽度（像素）<input id="seam-width" type="number" min="2" max="400" step="1"></label>
+          <label>区域高度（像素）<input id="seam-height" type="number" min="2" max="400" step="1"></label>
+          <label>羽化范围（0～1）<input id="seam-feather" type="number" min="0.01" max="1" step="0.05"></label>
+        </div>
+        <button id="seam-reset">还原接缝参数</button>
+        <p class="hint">拖动虚线椭圆移动区域；宽高随零件旋转。把手两处接脚可分别调整。关闭区域边框查看最终效果。</p>
+      </section>
+      <div id="parts" class="part-tabs" role="group" aria-label="选择调整对象">
+        <button data-part="body">灯身</button><button data-part="spout">灯嘴</button><button data-part="handle">把手</button>
+      </div>
+      <h2 id="selection-title">灯嘴</h2>
+      <div class="field-grid">
+        <label>位置 X<input id="x" type="number" step="1" min="270" max="1230"></label>
+        <label>位置 Y<input id="y" type="number" step="1" min="316" max="884"></label>
+        <label>宽度<input id="width" type="number" step="1" min="10" max="960"></label>
+        <label>高度<input id="height" type="number" step="1" min="10" max="960"></label>
+      </div>
+      <label class="check"><input id="lock-ratio" type="checkbox" checked> 改大小时保持当前比例</label>
+      <label class="rotation-field">旋转角度（度，正数顺时针）<input id="rotationDeg" type="number" step="0.1" min="-180" max="180"></label>
+      <input id="rotation-slider" aria-label="旋转角度滑块" type="range" step="0.1" min="-180" max="180">
+      <div class="field-grid">
+        <label>前后层级（大值在前）<input id="layer" type="number" step="1" min="-10" max="10"></label>
+        <label class="check"><input id="flipX" type="checkbox"> 水平翻转</label>
+      </div>
+      <div class="actions"><button id="send-back">放到灯身后面</button><button id="bring-front">放到灯身前面</button></div>
+      <div class="actions"><button id="reset-part">还原当前零件</button><button id="reset-all">还原全部</button></div>
+      <figure class="reference"><img src="../map-assets/ITM_L2_LAMP_R_OFF.png" alt="游戏实际使用的右向油灯形状参考"><figcaption>实际使用的油灯：参考灯嘴方向和环把结构</figcaption></figure>
+      <button id="copy" class="primary">复制参数给助手</button>
+      <p id="copy-status" role="status">仅保存调整工具的参数，不修改游戏存档。</p>
+      <details><summary>查看／手动复制参数</summary><textarea id="output" readonly aria-label="导出的油灯拼接参数"></textarea></details>
+    </aside>
+  </main>
+  <div id="asset-loader" aria-hidden="true"></div>
+  <script src="../js/phaser.min.js"></script>
+  <script src="../js/LampForming.js"></script>
+  <script src="assembly-seams.js"></script>
+  <script src="../js/LampAssemblyLayout.js"></script>
+  <script src="assembly-tuner.js"></script>
+</body>
+</html>

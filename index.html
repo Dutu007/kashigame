@@ -14,17 +14,18 @@
 <body>
 <div id="game"></div>
 <script src="js/phaser.min.js"></script>
-<script src="js/main.js?v=79"></script>
-<script src="js/LadderWorkshop.js?v=7"></script>
+<script src="js/UISkin.js?v=1"></script>
+<script src="js/main.js?v=82"></script>
+<script src="js/LadderWorkshop.js?v=8"></script>
 <script src="js/LampForming.js?v=2"></script>
 <script src="js/LampAssemblyLayout.js?v=1"></script>
 <script src="js/LampFiring.js?v=1"></script>
-<script src="js/LampWorkshop.js?v=26"></script>
-<script src="js/ui.js?v=72"></script>
-<script src="js/SurfaceScene.js?v=54"></script>
-<script src="js/TunnelScene.js?v=63"></script>
+<script src="js/LampWorkshop.js?v=29"></script>
+<script src="js/ui.js?v=75"></script>
+<script src="js/SurfaceScene.js?v=56"></script>
+<script src="js/TunnelScene.js?v=64"></script>
 <script src="js/game.js?v=48"></script>
-<!-- 开发入口：自动加载土陶主体位置调整工具（tmp/place-tuner.js）。
+<!-- 开发入口：自动加载土陶主体位置调整工具（tools/place-tuner.js）。
      触发条件：地址带 ?tools=1，或在 F2 面板里点过该按钮（记在 localStorage.twc_tools）。
      带 ?tools=0 可强制关掉并清除记忆。它只做覆盖层预览，不改动游戏状态；发布前删掉这段即可。 -->
 <script>
@@ -40,7 +41,7 @@
   }
   if (!on) return;
   var s = document.createElement('script');
-  s.src = 'tmp/place-tuner.js?v=' + Date.now();
+  s.src = 'tools/place-tuner.js?v=' + Date.now();
   document.body.appendChild(s);
 })();
 </script>

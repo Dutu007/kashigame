@@ -122,7 +122,7 @@ class SurfaceScene extends Phaser.Scene {
 
     // ---- 交互提示牌（世界空间，宽度随文本自适应） ----
     this.prompt = this.add.container(0, 0).setDepth(60).setVisible(false);
-    this.promptPanel = this.add.graphics().setDepth(60);
+    this.promptPanel = skinFrame(this, 'notice', -240, -40, 480, 80, { cuts: [0.25, 0.14, 0.3, 0.3] }).setDepth(60);
     this.promptText = this.add.text(0, 0, '', {
       fontFamily: FONT, fontSize: '25px', color: '#4a2f1a', resolution: 2,
     }).setOrigin(0, 0.5).setDepth(61);
@@ -230,15 +230,9 @@ class SurfaceScene extends Phaser.Scene {
     if (label === this._lastLabel) return;
     this._lastLabel = label;
     this.promptText.setText(label);
-    const w = Math.ceil(this.promptText.width) + 104;
-    const pg = this.promptPanel.clear();
-    pg.fillStyle(0xf7ecd4, 0.95).fillRoundedRect(-w / 2, -28, w, 56, 14);
-    pg.lineStyle(2, 0x7a4a21, 1).strokeRoundedRect(-w / 2 + 1, -27, w - 2, 54, 14);
-    const dx = -w / 2 + 32;
-    pg.fillStyle(0xc9973f, 1)
-      .fillTriangle(dx, -13, dx + 13, 0, dx, 13)
-      .fillTriangle(dx - 13, 0, dx, -13, dx, 13);
-    this.promptText.setPosition(-w / 2 + 56, 0);
+    const w = Math.ceil(this.promptText.width) + 148;
+    this.promptPanel.setPosition(-w / 2, -40).resize(w, 80);
+    this.promptText.setPosition(-w / 2 + 76, 0);
   }
 
   nearestInteractable() {
@@ -321,8 +315,7 @@ class SurfaceScene extends Phaser.Scene {
       this.descend(i);
     } else if (this.canDescendWell(i)) {
       // 布设即下井：不做动画与绳梯贴图，转场画面后续由视频替代
-      st.ladder = true; s.laddersLeft--; s.lastWell = i;
-      SaveService.save();
+      st.ladder = true; s.laddersLeft--;
       this.descend(i);
     } else {
       G.ui.dialogue.open(LINES.noLadder);
@@ -402,6 +395,9 @@ class SurfaceScene extends Phaser.Scene {
   }
 
   descend(i) { // §10 固定转场：0.35s淡出 → 切场景 → 0.35s淡入
+    // 首次布梯和重复沿梯下井都更新刷新后的返回位置。
+    G.state.lastWell = i;
+    SaveService.save();
     this.fading = true;
     this.cameras.main.fadeOut(350, 0, 0, 0);
     this.time.delayedCall(380, () => this.scene.start('Tunnel', { seg: ['UA', 'UB', 'UC'][i] }));

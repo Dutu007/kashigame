@@ -1,0 +1,61 @@
+{
+  "tool": "built-in imagegen",
+  "transparent_background": true,
+  "extraction_prompt": "Use case: background-extraction. Edit target: supplied game UI artwork. Remove ONLY the exterior white background to actual transparency. Preserve the complete artwork, opaque parchment/blue interior, all gold stone turquoise ornaments and original composition. No text, no new elements. Tight crop to artwork with a small transparent margin. This is a production game UI asset, preserve sharp edges and detail.",
+  "workshop_prompt": "Create a production game UI BACKGROUND ASSET based on these reference images. Image 1 is the desired art direction and rectangular sandstone frame, image 2 is supplementary parchment/material style. Output ONLY one large landscape sandstone-and-parchment panel, width:height EXACTLY 1540:885, tightly framed with minimal transparent margin outside the silhouette. All interior is opaque warm light cream parchment. Thick irregular weathered sandstone outer border about 3% of width, understated turquoise tile inlays, antique gold filigree accents at four corners, subtle oasis architecture/palm silhouettes ONLY in top right header and bottom right corner at very low contrast. Keep the entire central area and upper left 80% light, calm and readable. NO lettering, NO text, NO buttons, NO interior frames, NO wooden table, NO ropes, NO materials, NO gameplay objects, NO backdrop scene, NO UI bars outside panel. NO large diamonds or stretched ornaments. This is the blank underlying large panel, game engine will add all live content over it. Hand painted realistic stone and parchment matching reference 1, finely detailed, restrained elegant turquoise and antique gold, not shiny metal. Preserve lots of plain parchment usable area. Actual transparent exterior.",
+  "workshop_references": [
+    "reference-workshop.png",
+    "c610a620e7db58e170700cd4c443647d.jpg"
+  ],
+  "assets": [
+    {
+      "id": "01",
+      "source": "437fa9969b18b6b33db17bfb1ee0b6a6.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-goal.png",
+      "name": "定位徽章／孔雀蓝任务横条",
+      "usage": "已用于左上目标追踪。左端地标徽章固定比例，中间蓝底承载动态目标，右侧预留收边空间。"
+    },
+    {
+      "id": "03",
+      "source": "697f46471cc9416c21390cca5073c531.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-confirm.png",
+      "name": "双按钮确认面板",
+      "usage": "提取金色与青色按钮用于制作、修渠操作，按钮文字和点击区域由游戏代码绘制。"
+    },
+    {
+      "id": "04",
+      "source": "bf89ff048121fd662bcf67e4d9c9c222.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-card.png",
+      "name": "青金砂岩方框",
+      "usage": "用于工作台边框与右侧材料说明卡。五段切片保留边角与中央宝石比例，工作台中心透明，不遮挡操作物件。"
+    },
+    {
+      "id": "05",
+      "source": "c610a620e7db58e170700cd4c443647d.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-panel.png",
+      "name": "砂岩羊皮纸说明框",
+      "usage": "用于任务完成、制作暂停等通知条。原图是横向构图，不拉成高面板；大型制作面板使用参考图补生成的专用底板。"
+    },
+    {
+      "id": "06",
+      "source": "d630ba17fd4b25203c74e58306590cec.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-dialogue.png",
+      "name": "带姓名签的人物对话框",
+      "usage": "用于人物对白。左上蓝签显示姓名，中央纸面显示动态正文，右下显示继续操作；保留灯笼、木梁与织物。"
+    },
+    {
+      "id": "07",
+      "source": "fba22726d9520a59155636ba8e1b35af.jpg",
+      "asset": "../map-assets/UI_RUNTIME/skin-notice.png",
+      "name": "花形徽章浅色提示横条",
+      "usage": "用于右上操作提示，以及地表、井下互动提示。深棕文字保证纸面可读性，徽章与收边区域不排字。"
+    },
+    {
+      "id": "08",
+      "source": "reference-workshop.png",
+      "asset": "../map-assets/UI_RUNTIME/skin-workshop.png",
+      "name": "参考图补生成：大型制作底板",
+      "usage": "根据用户提供的绳梯制作参考图重新生成，无文字、无按钮、无工作台的砂岩羊皮纸底板。用于绳梯、陶灯各工序及修渠，等比缩放适配 1540×885 区域。"
+    }
+  ]
+}

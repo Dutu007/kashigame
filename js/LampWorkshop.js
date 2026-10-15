@@ -190,7 +190,6 @@ class LampWorkshop {
     this.elapsed = 0;
     this.saveClock = 0;
     this.canvasKey = 'lamp-workshop-' + (++lampCanvasId);
-    this.surface = this.scene.textures.createCanvas(this.canvasKey, 960, 568);
     this.moveListener = pointer => {
       if (this.firingActive) { this.firing.move(pointer); return; }
       if (this.formingActive) { this.forming.move(pointer); return; }
@@ -265,7 +264,6 @@ class LampWorkshop {
     this.scene.input.off('pointerup', this.upListener);
     this.scene.input.off('pointerupoutside', this.upOutsideListener);
     this.scene.input.off('pointercancel', this.cancelListener);
-    this.scene.textures.remove(this.canvasKey);
     this.clearAssemblySeams();
   }
 
@@ -280,7 +278,6 @@ class LampWorkshop {
     this.stroke = null;
     this.effect = null;
     this.status = null;
-    this.hint = null;
     this.modal.titleT.setText('准备土陶油灯材料');
     this.modal.stepT.setText(c.phase === 0 ? '和泥成坯' : '材料准备好了');
     this.modal.tipT.setText('Esc：保存并退出');
@@ -292,12 +289,6 @@ class LampWorkshop {
       .setDisplaySize(300, 200).setAlpha(0.98));
     this.clayBaseScaleX = this.claySprite.scaleX;
     this.clayBaseScaleY = this.claySprite.scaleY;
-    const frame = this.add(this.scene.add.graphics());
-    frame.lineStyle(3, 0x7a4a21, 1).strokeRoundedRect(270, 316, 960, 568, 8);
-    this.add(this.scene.add.image(750, 600, this.canvasKey));
-    this.overlay = this.add(this.scene.add.graphics());
-    // 操作反馈不再单独铺在画面底部，避免短暂文字造成视觉噪音。
-    this.hint = null;
 
     if (c.phase === 0) this.renderKnead();
     else this.renderComplete();
@@ -312,18 +303,6 @@ class LampWorkshop {
     if (c.lastAction === 'fold') return c.foldSide < 0 ? 'POTTERY_CLAY_FOLD_LEFT' : 'POTTERY_CLAY_FOLD_RIGHT';
     if (c.lastAction === 'press') return c.skew < 0 ? 'POTTERY_CLAY_PRESS_LEFT' : 'POTTERY_CLAY_PRESS_RIGHT';
     return 'POTTERY_CLAY_NEUTRAL';
-  }
-
-  conditionText() {
-    const q = this.craft.quality();
-    if (q.moisture < 0.3) return '泥团偏干，先轻按中心让泥性回匀。';
-    if (q.moisture > 0.9) return '水分偏多，暂时少按压，多做一次完整翻折。';
-    if (q.air > 0.58) return '泥里还有气泡，按压后把一侧翻到另一侧。';
-    if (Math.abs(this.craft.skew) > 0.2) return '泥团有些偏斜，从较高的一侧向另一侧翻折。';
-    if (q.uniformity < 0.65) return '软硬还不一致，换一个位置继续按压。';
-    if (q.plasticity < 0.58) return '泥性开始变柔，再做一次完整翻折。';
-    if (this.craft.ready()) return '泥色均匀、软硬一致，可以上转盘成型了。';
-    return '手感正在变稳，继续观察泥团的变化。';
   }
 
   statusText() {

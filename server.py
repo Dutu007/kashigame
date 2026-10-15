@@ -1,6 +1,5 @@
 """开发用静态服务器：禁用缓存，保证刷新总是拿到最新文件。用法: python server.py [端口]"""
 import http.server
-import socketserver
 import subprocess
 import sys
 
@@ -31,8 +30,9 @@ def already_listening(port):
     return False
 
 
-class ReuseServer(socketserver.TCPServer):
+class ReuseServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True  # 允许快速重启（连接残留 TIME_WAIT 期间仍可重绑）
+    request_queue_size = 32  # 浏览器会并发加载脚本、图片并预建连接
 
 
 if already_listening(PORT):

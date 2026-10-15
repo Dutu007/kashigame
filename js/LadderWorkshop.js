@@ -183,8 +183,6 @@ class LadderWorkshop {
     this.modal.stepT.setText(['1/3 · 摆横档、调绳长', '2/3 · 穿绳、收紧', '3/3 · 沙袋试重', '绳梯检查通过'][phase]);
     this.modal.tipT.setText('Esc：保存并退出');
     this.add(this.scene.add.image(750, 600, 'LADDER_TABLE').setDisplaySize(960, 568));
-    const frame = this.add(this.scene.add.graphics());
-    frame.lineStyle(3, 0x7a4a21, 1).strokeRoundedRect(270, 316, 960, 568, 8);
     this.graphics = this.add(this.scene.add.graphics().setDepth(2));
     this.backGraphics = this.add(this.scene.add.graphics());
     this.backGraphics.clear();
