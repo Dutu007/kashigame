@@ -2,6 +2,8 @@
 import http.server
 import subprocess
 import sys
+from functools import partial
+from pathlib import Path
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 
@@ -40,7 +42,8 @@ if already_listening(PORT):
     print('如需重启，请先关闭旧的 python 服务器窗口或结束对应进程。')
     sys.exit(1)
 
-with ReuseServer(('0.0.0.0', PORT), NoCacheHandler) as httpd:
+handler = partial(NoCacheHandler, directory=str(Path(__file__).resolve().parent))
+with ReuseServer(('0.0.0.0', PORT), handler) as httpd:
     print(f'serving on http://localhost:{PORT} (no-cache)')
     try:
         httpd.serve_forever()

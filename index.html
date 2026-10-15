@@ -4,46 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
-<title>时间织城 · 第二关 坎儿井（灰盒版）</title>
-<style>
-  html, body { margin: 0; padding: 0; height: 100%; background: #0d0906; overflow: hidden; }
-  #game { width: 100vw; height: 100vh; }
-  canvas { display: block; }
-</style>
+<title>时间织城 · 织梦巷与坎儿井</title>
+<link rel="stylesheet" href="shared/app.css">
 </head>
 <body>
-<div id="game"></div>
-<script src="js/phaser.min.js"></script>
-<script src="js/UISkin.js?v=1"></script>
-<script src="js/main.js?v=82"></script>
-<script src="js/LadderWorkshop.js?v=8"></script>
-<script src="js/LampForming.js?v=2"></script>
-<script src="js/LampAssemblyLayout.js?v=1"></script>
-<script src="js/LampFiring.js?v=1"></script>
-<script src="js/LampWorkshop.js?v=29"></script>
-<script src="js/ui.js?v=75"></script>
-<script src="js/SurfaceScene.js?v=56"></script>
-<script src="js/TunnelScene.js?v=64"></script>
-<script src="js/game.js?v=48"></script>
-<!-- 开发入口：自动加载土陶主体位置调整工具（tools/place-tuner.js）。
-     触发条件：地址带 ?tools=1，或在 F2 面板里点过该按钮（记在 localStorage.twc_tools）。
-     带 ?tools=0 可强制关掉并清除记忆。它只做覆盖层预览，不改动游戏状态；发布前删掉这段即可。 -->
-<script>
-(function () {
-  var q = location.search;
-  var on = q.indexOf('tools=1') >= 0;
-  if (q.indexOf('tools=0') >= 0) {
-    try { localStorage.removeItem('twc_tools'); } catch (e) {}
-  } else if (!on) {
-    try { on = localStorage.getItem('twc_tools') === '1'; } catch (e) {}
-  } else {
-    try { localStorage.setItem('twc_tools', '1'); } catch (e) {}
-  }
-  if (!on) return;
-  var s = document.createElement('script');
-  s.src = 'tools/place-tuner.js?v=' + Date.now();
-  document.body.appendChild(s);
-})();
-</script>
+<main id="menu" class="menu">
+  <div class="menu-inner">
+    <p class="eyebrow">一座城，两段相连的故事</p><h1>时间织城</h1>
+    <p class="intro">循着巷中的纹样，走向地下的水脉。<br>用双手，接续这座城的记忆。</p>
+    <div class="journey-status"><span id="journeyStatus">从织梦巷开始你的旅程</span><button id="continueJourney" class="primary" hidden>继续旅程 <span aria-hidden="true">→</span></button></div>
+    <div class="chapters">
+      <article class="chapter-card">
+        <img class="chapter-art" src="levels/weave-lane/assets/scenes/02_weave_dream_lane/lane_market_bg.png" alt="蓝色门窗与织物环绕的织梦巷">
+        <div class="chapter-copy"><p class="eyebrow">第一关 · 纹脉</p><h2>织梦巷</h2><p>走进老织坊，辨纹、扎线、染绸，找回一段古老的记忆。</p><button id="enterWeave" class="primary">走进织梦巷 →</button><span id="weaveStatus" class="chapter-status">旅程起点</span></div>
+      </article>
+      <article class="chapter-card">
+        <img class="chapter-art karez-art" src="map-assets/SCN_L2_S.png" alt="荒漠中的坎儿井与守井人的棚屋">
+        <div class="chapter-copy"><p class="eyebrow">第二关 · 水脉</p><h2>坎儿井</h2><p>制作绳梯与陶灯，深入暗渠清淤、修补，让水流重新回到小镇。</p><button id="enterKarez" class="primary" disabled>完成第一关后开启</button><span id="karezStatus" class="chapter-status">承接织梦巷的故事</span></div>
+      </article>
+    </div>
+    <p class="menu-note">进度自动保存在当前浏览器 · 两关沿用你选择的同一位主角</p>
+    <p id="storageWarning" role="status" hidden>浏览器暂时无法写入存档。当前窗口仍会保留进度，请暂时不要关闭或刷新页面。</p>
+  </div>
+</main>
+<section id="play" class="play" hidden aria-label="游戏">
+  <header class="game-bar"><button id="backToMenu">‹ 关卡目录</button><span id="chapterTitle"></span><span class="bar-end"><span id="heroName"></span><button id="nextChapter" hidden>前往坎儿井 →</button></span></header>
+  <div id="chapterMount" class="chapter-mount"></div><p id="loading" class="loading" role="status" hidden>正在进入关卡……</p>
+</section>
+<dialog id="completion" aria-labelledby="completionTitle">
+  <p class="eyebrow" id="completionKicker"></p><h2 id="completionTitle"></h2><p id="completionCopy"></p>
+  <div class="completion-actions"><button id="stayInChapter">继续探索</button><button id="completionNext" class="primary"></button></div>
+</dialog>
+<script src="shared/characters.js"></script><script src="shared/campaign.js"></script><script src="shared/app.js?v=2"></script>
 </body>
 </html>

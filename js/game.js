@@ -1,10 +1,4 @@
 // 最后加载：所有场景类就绪后启动游戏
-window.__errs = [];
-window.addEventListener('error', e =>
-  window.__errs.push((e.message || 'error') + ' @ ' + (e.filename || '').split('/').pop() + ':' + (e.lineno || '?')));
-window.addEventListener('unhandledrejection', e =>
-  window.__errs.push('promise: ' + ((e.reason && e.reason.message) || e.reason)));
-
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
@@ -13,8 +7,21 @@ const game = new Phaser.Game({
   backgroundColor: '#0d0906',
   render: { roundPixels: true },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  // ?timeoutloop=1：用 setTimeout 驱动主循环（窗口被遮挡、RAF 挂起时仍可运行）
-  fps: { forceSetTimeOut: location.search.includes('timeoutloop') },
   scene: [BootScene, SurfaceScene, TunnelScene, UIScene],
 });
-window.__game = game; // 调试句柄
+Campaign.enter('karez');
+if (G.state.chapterComplete) Campaign.complete('karez');
+ChapterBridge.register({
+  save() {
+    // Flush live workshop models before the host removes this chapter's iframe.
+    const workshop = game.scene.getScene('UI')?.workshop;
+    if (workshop?.opened) {
+      workshop.ladderGame?.save();
+      workshop.lampGame?.save();
+      if (workshop.kind === 'patch') workshop.savePatchProgress();
+    }
+    SaveService.save();
+  },
+  pause() { game.input.enabled = false; game.loop.sleep(); },
+  resume() { game.input.enabled = true; game.loop.wake(); },
+});

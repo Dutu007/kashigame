@@ -11,6 +11,7 @@ class SurfaceScene extends Phaser.Scene {
   }
 
   create() {
+    G.state.sceneId = 'Surface';
     this.fading = false; this.vy = 0; this.onGround = true;
     this.lampImg = null; // 场景重启后旧引用已销毁
     const cam = this.cameras.main;
@@ -27,76 +28,17 @@ class SurfaceScene extends Phaser.Scene {
       return img;
     });
 
-    // ---- ?wells=1 井口校准模式：1/2/3 选井，方向键移动(Shift=1细调)，Q/A 缩放，C 切换杂草/清洁态对照 ----
-    if (location.search.includes('wells')) {
-      const dbg = this.add.graphics().setDepth(99);
-      const label = this.add.text(24, 120, '', {
-        fontFamily: FONT, fontSize: '22px', color: '#ffe08a', resolution: 2,
-      }).setScrollFactor(0).setDepth(120);
-      const cal = { sel: 0 };
-      const redraw = () => {
-        dbg.clear();
-        WELL_SPRITE_CONF.forEach((c, i) => {
-          const tex = this.textures.get(c.tex).getSourceImage();
-          const s = c.w / tex.width;
-          const hx = c.x + (WELL_HOLES_TEX[i][0] - tex.width / 2) * s;
-          const hy = c.y - (tex.height - WELL_HOLES_TEX[i][1]) * s;
-          const bx = BG_HOLES_PX[i][0] * W / 2172;
-          const by = BG_HOLES_PX[i][1] * H / 724;
-          dbg.lineStyle(2, 0xff00ff, 1).strokeCircle(hx, hy, 9);
-          dbg.lineStyle(2, 0x00ffff, 1).strokeCircle(bx, by, 13);
-        });
-        const c = WELL_SPRITE_CONF[cal.sel];
-        label.setText('校准 W0' + (cal.sel + 1) + '  x=' + c.x + ' y=' + c.y + ' w=' + c.w +
-          '   ←→↑↓移动(Shift=1)  Q/A缩放±2%  C切草/净  1/2/3选井');
-        console.log('WELLS=' + JSON.stringify(WELL_SPRITE_CONF.map(c => [c.x, c.y, c.w])));
-      };
-      const apply = () => {
-        const c = WELL_SPRITE_CONF[cal.sel], img = this.wellImgs[cal.sel];
-        img.setPosition(c.x, c.y).setDisplaySize(c.w, c.w * img.height / img.width);
-      };
-      const nudge = (dx, dy) => {
-        const c = WELL_SPRITE_CONF[cal.sel];
-        c.x += dx; c.y += dy;
-        apply(); redraw();
-      };
-      this.input.keyboard.on('keydown-ONE', () => { cal.sel = 0; redraw(); });
-      this.input.keyboard.on('keydown-TWO', () => { cal.sel = 1; redraw(); });
-      this.input.keyboard.on('keydown-THREE', () => { cal.sel = 2; redraw(); });
-      this.input.keyboard.on('keydown-LEFT', e => nudge(e.shiftKey ? -1 : -8, 0));
-      this.input.keyboard.on('keydown-RIGHT', e => nudge(e.shiftKey ? 1 : 8, 0));
-      this.input.keyboard.on('keydown-UP', e => nudge(0, e.shiftKey ? -1 : -8));
-      this.input.keyboard.on('keydown-DOWN', e => nudge(0, e.shiftKey ? 1 : 8));
-      this.input.keyboard.on('keydown-Q', e => {
-        const c = WELL_SPRITE_CONF[cal.sel];
-        c.w = Math.max(200, Math.round(c.w * (e.shiftKey ? 0.998 : 0.98)));
-        apply(); redraw();
-      });
-      this.input.keyboard.on('keydown-A', e => {
-        const c = WELL_SPRITE_CONF[cal.sel];
-        c.w = Math.round(c.w * (e.shiftKey ? 1.002 : 1.02));
-        apply(); redraw();
-      });
-      this.input.keyboard.on('keydown-C', () => {
-        const img = this.wellImgs[cal.sel];
-        img.setVisible(!img.visible);
-      });
-    }
-
     // （布梯后不再显示绳梯贴图：布设即下井，转场画面由后续视频替代）
 
-    // ---- 守井人与玩家占位 ----
+    // ---- 守井人保留矩形；主角复用第一关的动画素材 ----
     this.npc = this.add.image(SURF.npcX, surfaceGroundY(SURF.npcX) + 6, 'npc')
       .setOrigin(0.5, 1).setDepth(10);
     this.add.text(SURF.npcX, surfaceGroundY(SURF.npcX) - 206, '守井人', {
       fontFamily: FONT, fontSize: '20px', color: '#f7ecd4', resolution: 2,
     }).setOrigin(0.5).setDepth(11).setStroke('#1a120b', 4);
 
-    const sx = this.spawnWell != null ? SURF.wells[this.spawnWell] + 64 : 380; // §10：出生偏离洞口64
-    this.player = this.add.image(sx, surfaceGroundY(sx), 'player')
-      .setOrigin(0.5, 1).setDepth(10);
-    // 返程出生时面向地图中心
-    if (this.spawnWell != null) this.player.setFlipX(sx > W / 2);
+    const sx = this.spawnWell != null ? SURF.wells[this.spawnWell] + 64 : 460; // 与守井人留出完整角色宽度
+    this.player = HeroActor.create(this, sx, surfaceGroundY(sx), this.spawnWell != null && sx > W / 2 ? -1 : 1);
     cam.stopFollow(); // 相机改为 update 内手动平滑驱动
 
     // ---- 材料点标记（发现缺梯后显示） ----
@@ -130,14 +72,14 @@ class SurfaceScene extends Phaser.Scene {
     this._lastLabel = null;
 
     // ---- 输入 ----
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,SHIFT');
-    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,SHIFT');
+    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E');
+    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E');
 
     if (!G.ui) this.scene.launch('UI');
     this.time.delayedCall(400, () => {
-      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · E 互动 · Shift 加速(调试)');
+      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · E 互动');
       if (!G.state.introDone && !this.spawnWell && G.ui) {
-        G.ui.toast.show('时间织城 · 第二关 坎儿井', '灰盒演示版：先去找守井人对话');
+        G.ui.toast.show('时间织城 · 第二关 坎儿井', '先去找守井人，了解小镇缺水的原因');
       }
     });
   }
@@ -175,15 +117,17 @@ class SurfaceScene extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     const k = this.keys, jd = c => Phaser.Input.Keyboard.JustDown(c);
     const p = this.player;
+    const previousX = p.x;
+    let direction = 0;
+    const moveSpeed = 220;
 
     if (!this.locked) {
       let dir = 0;
       if (k.A.isDown || k.LEFT.isDown) dir -= 1;
       if (k.D.isDown || k.RIGHT.isDown) dir += 1;
       if (dir) {
-        const speed = 220 * (k.SHIFT.isDown ? 3 : 1); // §02：220逻辑单位/秒；Shift×3为调试加速
-        p.x = Phaser.Math.Clamp(p.x + dir * speed * dt, 60, W - 60);
-        p.setFlipX(dir < 0);
+        p.x = Phaser.Math.Clamp(p.x + dir * moveSpeed * dt, 60, W - 60);
+        direction = dir;
       }
       if (this.onGround && jd(k.SPACE)) { this.vy = -780; this.onGround = false; } // 跳跃仅空格
     }
@@ -195,6 +139,8 @@ class SurfaceScene extends Phaser.Scene {
     } else if (p.y >= gy && this.vy >= 0) {
       p.y = gy; this.vy = 0; this.onGround = true;
     }
+
+    HeroActor.update(p, direction, p.x !== previousX, this.onGround, moveSpeed);
 
     // 相机手动平滑跟随（水平为主，垂直整幅可见无需滚动）
     const cam = this.cameras.main;
@@ -218,7 +164,7 @@ class SurfaceScene extends Phaser.Scene {
     const st = G.state;
     if (st.lampOwned) {
       if (!this.lampImg) this.lampImg = this.add.image(p.x, p.y - 60, 'LAMP_R').setDepth(12);
-      const ldir = p.flipX ? -1 : 1, lit = st.lampOn;
+      const ldir = p.facing, lit = st.lampOn;
       this.lampImg.setTexture(ldir < 0 ? (lit ? 'LAMP_L' : 'LAMP_L_OFF')
                                         : (lit ? 'LAMP_R' : 'LAMP_R_OFF'))
         .setPosition(p.x + ldir * 58, p.y - 60)
@@ -381,6 +327,7 @@ class SurfaceScene extends Phaser.Scene {
           G.ui.toast.show('章节完成', '本段维护记录已保存');
           setGoal(this.goalText());
           SaveService.save();
+          ChapterBridge.complete('karez');
         });
       }
     } else if (s.recordSaved) {

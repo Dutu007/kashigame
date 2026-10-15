@@ -36,7 +36,7 @@ class TunnelScene extends Phaser.Scene {
 
     // 出生点：井筒进入偏离中心64（§10）
     const sx = this.seg.shaftX + 64;
-    this.player = this.add.image(sx, this.seg.groundY(sx), 'player').setOrigin(0.5, 1).setDepth(10);
+    this.player = HeroActor.create(this, sx, this.seg.groundY(sx));
     cam.stopFollow(); // 相机改为 update 内手动平滑驱动，保证遮罩/光孔与玩家同帧对位
 
     // 油灯必须来自新流程的土陶小游戏；只对已完成该小游戏的存档补写显示状态。
@@ -69,23 +69,17 @@ class TunnelScene extends Phaser.Scene {
     this.prompt.add([this.promptPanel, this.promptText]);
     this._lastLabel = null;
 
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC,SHIFT');
-    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC,SHIFT');
+    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC');
+    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC');
 
     if (!G.ui) this.scene.launch('UI');
     this.time.delayedCall(400, () => {
-      if (this.groundEditor) { // ?ground=1 校准模式：不推进剧情、不写存档
-        setGoal('地面线校准：' + this.segKey + '（' + (this.groundLine === 'post' ? '修复后' : '修复前') + '）');
-        setHint('校准模式：画好后按 P，复制控制台输出');
-        return;
-      }
-      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · F 油灯 · E 互动 · Esc 退出 · Shift 加速(调试)');
+      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · F 油灯 · E 互动 · Esc 退出');
       if (G.ui && firstDescent) { // §06：首次照明教学在首次下井的井底触发，与下井的井无关
         G.ui.toast.show(`进入${SEG_TITLES[this.segKey]}`, '井底落脚区 · 按 F 点亮土陶小油灯');
       }
       SaveService.save();
     });
-    if (location.search.includes('ground')) this.initGroundEditor();
 
   }
 
@@ -119,16 +113,18 @@ class TunnelScene extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     const k = this.keys, jd = c => Phaser.Input.Keyboard.JustDown(c);
     const p = this.player;
+    const previousX = p.x;
+    let direction = 0;
+    const moveSpeed = 220;
 
     if (!this.locked) {
       let dir = 0;
       if (k.A.isDown || k.LEFT.isDown) dir -= 1;
       if (k.D.isDown || k.RIGHT.isDown) dir += 1;
       if (dir) {
-        const speed = 220 * (k.SHIFT.isDown ? 3 : 1); // Shift×3为调试加速
         const [lo, hi] = this.zoneBounds;
-        p.x = Phaser.Math.Clamp(p.x + dir * speed * dt, lo, hi);
-        p.setFlipX(dir < 0);
+        p.x = Phaser.Math.Clamp(p.x + dir * moveSpeed * dt, lo, hi);
+        direction = dir;
       }
       if (this.onGround && jd(k.SPACE)) { this.vy = -500; this.onGround = false; } // 井底小跳（头顶净高270）
       if (jd(k.F)) {
@@ -147,6 +143,8 @@ class TunnelScene extends Phaser.Scene {
     } else if (p.y >= gy && this.vy >= 0) {
       p.y = gy; this.vy = 0; this.onGround = true;
     }
+
+    HeroActor.update(p, direction, p.x !== previousX, this.onGround, moveSpeed);
 
     // 相机手动平滑跟随（取注视点略高于脚底），并按边界钳制
     const cam = this.cameras.main;
@@ -167,7 +165,6 @@ class TunnelScene extends Phaser.Scene {
 
   // -------- 交互分发 --------
   handleInteract(jd) {
-    if (this.groundEditor) return; // 校准模式屏蔽剧情交互
     if (!jd(this.keys.E)) return;
     if (this.local) { this.localE(); return; }
     const x = this.player.x, seg = this.seg, s = G.state;
@@ -181,7 +178,6 @@ class TunnelScene extends Phaser.Scene {
   }
 
   updatePrompt() {
-    if (this.groundEditor) { this.prompt.setVisible(false); return; }
     if (this.locked) { this.prompt.setVisible(false); return; }
     const x = this.player.x, seg = this.seg, s = G.state;
     let label = null, px = x, py = this.seg.groundY(x) - 250;
@@ -373,10 +369,9 @@ class TunnelScene extends Phaser.Scene {
 
   // -------- 黑暗遮罩（§11） --------
   redrawDark() {
-    if (this.groundEditor) return; // 校准模式关闭黑暗遮罩，看清整张图
     // 变化检测：灯焰摇曳量化到 ~12Hz；玩家/相机/开关灯都没变时跳过重绘（行走时仍逐帧跟随）
     const cam = this.cameras.main;
-    const key = Math.floor(this.time.now / 85) + '|' + G.state.lampOn + '|' + (this.player.flipX ? 1 : 0) +
+    const key = Math.floor(this.time.now / 85) + '|' + G.state.lampOn + '|' + this.player.facing +
       '|' + Math.round(this.player.x) + ',' + Math.round(this.player.y) +
       '|' + Math.round(cam.scrollX) + ',' + Math.round(cam.scrollY) + '|' + cam.zoom.toFixed(3);
     if (key === this._darkKey) return;
@@ -437,7 +432,7 @@ class TunnelScene extends Phaser.Scene {
 
     // 近身柔光：半径82逻辑单位（§11）；关灯时仅存弱轮廓
     // 油灯：提在朝向一侧；照明椭圆以灯焰为中心
-    const dir = this.player.flipX ? -1 : 1;
+    const dir = this.player.facing;
     const lampWX = this.player.x + dir * 84, lampWY = this.player.y - 84;
     const [lx, ly] = s2(lampWX, lampWY);
 
@@ -457,7 +452,7 @@ class TunnelScene extends Phaser.Scene {
   syncLamp() { // 手中的油灯贴图：跟随朝向，点亮(火苗)/熄灭(无焰)切换贴图，不用透明度
     const s = G.state;
     if (!s.lampOwned) { if (this.lampImg) { this.lampImg.destroy(); this.lampImg = null; } return; }
-    const dir = this.player.flipX ? -1 : 1, lit = s.lampOn;
+    const dir = this.player.facing, lit = s.lampOn;
     // 深度低于黑暗遮罩：灯体与玩家同样被黑幕罩住，只在井口自然光或灯焰光区里显形
     if (!this.lampImg) this.lampImg = this.add.image(0, 0, 'LAMP_R').setDepth(12);
     this.lampImg.setTexture(dir < 0 ? (lit ? 'LAMP_L' : 'LAMP_L_OFF')
@@ -466,134 +461,5 @@ class TunnelScene extends Phaser.Scene {
       .setDisplaySize(80, Math.round(80 * this.lampImg.height / this.lampImg.width));
   }
 
-  // ============================================================
-  // ?ground=1 地面线校准（修复后地面）：鼠标拖拽锚点编辑工作副本
-  // （localStorage 持久防丢），P 打印 JSON 用于回填 GROUND_U_POST，X 恢复默认
-  // ============================================================
-  initGroundEditor() {
-    const seg = this.segKey;
-    if (!GROUND_U_PRE[seg] || !GROUND_U_POST[seg]) return;
-    this.groundEditor = true;
-    // 编辑对象：URL line=pre/post 指定（默认修复后），T 可在修复前/后两套线间切换
-    const lm = location.search.match(/line=(pre|post)/);
-    const initData = this.scene.settings.data;
-    this.groundLine = (initData && initData.line) || (lm ? lm[1] : 'post');
-    this.darkImg.setVisible(false); // 校准需要看清整张图
 
-    const g = this.add.graphics().setDepth(90);
-    const hint = this.add.text(VIEW_W / 2, 20, '', {
-      fontFamily: FONT, fontSize: '20px', color: '#ffe08a', resolution: 2,
-    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(120).setStroke('#1a120b', 4);
-    const coordT = this.add.text(VIEW_W / 2, 50, '', {
-      fontFamily: FONT, fontSize: '20px', color: '#d8cdb2', resolution: 2,
-    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(120).setStroke('#1a120b', 4);
-
-    let selected = -1, dragging = false;
-    const calKey = () => seg + '_' + this.groundLine;   // 修复前/后两套线分开存取
-    const baseLine = () => (this.groundLine === 'post' ? GROUND_U_POST[seg] : GROUND_U_PRE[seg]);
-    const otherLine = () => (this.groundLine === 'post' ? GROUND_U_PRE[seg] : GROUND_U_POST[seg]);
-    const line = () => GROUND_CAL[calKey()];
-    const initCopy = () => { // 工作副本：沿用校准（若有），否则从对应默认线复制
-      if (!Array.isArray(line()) || line().length < 2) {
-        GROUND_CAL[calKey()] = baseLine().map(p => [p[0], p[1]]);
-      }
-    };
-    const applyBg = () => { // 底图跟随编辑对象：修复前看淤积/破损图，修复后看干净/修复图
-      const tex = this.groundLine === 'post'
-        ? (this.seg.bgFixed || this.seg.bg)
-        : (this.seg.bgSilt || this.seg.bg);
-      if (this.textures.exists(tex)) this.bg.setTexture(tex);
-    };
-    const refresh = () => {
-      window.__GROUND_EDIT = { seg, line: this.groundLine }; // 告诉 groundUAt 当前试哪条线
-      initCopy();
-      applyBg();
-      hint.setText('地面线校准 · ' + seg + '（' + (this.groundLine === 'post' ? '修复后' : '修复前·淤积态') + '）—— 拖拽锚点 / 点线上插点 / Del 删点 / 方向键微调(Shift×10) / T 切换修复前后 / P 打印JSON / X 恢复默认 / 1 2 3 切段');
-    };
-    const print = () => {
-      const data = line().map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]);
-      console.log((this.groundLine === 'post' ? 'GROUND_U_POST.' : 'GROUND_U_PRE.') + seg + ' = ' + JSON.stringify(data));
-    };
-    const clampX = (i, x) => {
-      const pts = line();
-      const lo = i > 0 ? pts[i - 1][0] + 2 : 0;
-      const hi = i < pts.length - 1 ? pts[i + 1][0] - 2 : W;
-      return Phaser.Math.Clamp(x, lo, hi);
-    };
-    const redraw = () => {
-      g.clear();
-      for (const [x, y] of otherLine()) g.fillStyle(0x9a8a7a, 0.4).fillCircle(x, y, 3); // 另一套线参照
-      g.lineStyle(4, 0x35d07f, 1).beginPath();
-      line().forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
-      g.strokePath();
-      line().forEach(([x, y], i) => {
-        g.fillStyle(i === selected ? 0xffe08a : 0x35d07f, 1).fillCircle(x, y, i === selected ? 9 : 6);
-        if (i === selected) g.lineStyle(2, 0xc9973f, 1).strokeCircle(x, y, 14);
-      });
-      coordT.setText(selected >= 0
-        ? `锚点${selected}: ${Math.round(line()[selected][0] * 10) / 10}, ${Math.round(line()[selected][1] * 10) / 10}`
-        : '绿色线=正在编辑的地面线（角色脚底），灰点=另一套线参照');
-    };
-    const persist = () => { saveGroundCal(); print(); redraw(); };
-
-    this.input.on('pointerdown', p => {
-      const wx = p.worldX, wy = p.worldY, pts = line();
-      for (let i = 0; i < pts.length; i++) {
-        if (Phaser.Math.Distance.Between(wx, wy, pts[i][0], pts[i][1]) <= 20) {
-          selected = i; dragging = true; redraw(); return;
-        }
-      }
-      for (let i = 1; i < pts.length; i++) { // 点在折线附近 → 插入锚点
-        const x0 = pts[i - 1][0], x1 = pts[i][0];
-        if (wx < Math.min(x0, x1) - 8 || wx > Math.max(x0, x1) + 8) continue;
-        const y = lineAt(pts, wx);
-        if (Math.abs(wy - y) <= 24) {
-          pts.splice(i, 0, [wx, y]);
-          selected = i; dragging = true; persist(); return;
-        }
-      }
-      selected = -1; redraw();
-    });
-    this.input.on('pointermove', p => {
-      if (!dragging || selected < 0) return;
-      const pts = line();
-      pts[selected][0] = clampX(selected, p.worldX);
-      pts[selected][1] = Phaser.Math.Clamp(p.worldY, 0, H);
-      redraw();
-    });
-    this.input.on('pointerup', () => { if (dragging) { dragging = false; persist(); } });
-
-    const moveSel = (dx, dy, step) => {
-      if (selected < 0) return;
-      const pts = line();
-      pts[selected][0] = clampX(selected, pts[selected][0] + dx * step);
-      pts[selected][1] = Phaser.Math.Clamp(pts[selected][1] + dy * step, 0, H);
-      persist();
-    };
-    const kb = this.input.keyboard;
-    kb.on('keydown-LEFT', e => moveSel(-1, 0, e.shiftKey ? 10 : 1));
-    kb.on('keydown-RIGHT', e => moveSel(1, 0, e.shiftKey ? 10 : 1));
-    kb.on('keydown-UP', e => moveSel(0, -1, e.shiftKey ? 10 : 1));
-    kb.on('keydown-DOWN', e => moveSel(0, 1, e.shiftKey ? 10 : 1));
-    const delSel = () => { if (selected >= 0 && line().length > 2) { line().splice(selected, 1); selected = -1; persist(); } };
-    kb.on('keydown-DEL', delSel);
-    kb.on('keydown-BACKSPACE', delSel);
-    kb.on('keydown-P', print);
-    kb.on('keydown-T', () => { // 切换编辑修复前/后两套线（底图与脚底试走线同步换）
-      this.groundLine = this.groundLine === 'post' ? 'pre' : 'post';
-      selected = -1; refresh(); redraw(); print();
-      setGoal('地面线校准：' + seg + '（' + (this.groundLine === 'post' ? '修复后' : '修复前') + '）');
-    });
-    kb.on('keydown-X', () => { // 恢复默认：清除当前线的校准覆盖，工作副本回到默认参数
-      delete GROUND_CAL[calKey()]; saveGroundCal();
-      initCopy(); // 仅编辑用副本，不落盘
-      selected = -1; redraw(); print();
-    });
-    kb.on('keydown-ONE', () => this.scene.restart({ seg: 'UA', line: this.groundLine }));
-    kb.on('keydown-TWO', () => this.scene.restart({ seg: 'UB', line: this.groundLine }));
-    kb.on('keydown-THREE', () => this.scene.restart({ seg: 'UC', line: this.groundLine }));
-    refresh();
-    redraw();
-    console.log('[地面线校准] 当前 ' + seg + ' ' + (this.groundLine === 'post' ? '修复后' : '修复前') + '线：' + JSON.stringify(line()));
-  }
 }

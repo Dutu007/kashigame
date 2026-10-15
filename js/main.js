@@ -1,5 +1,5 @@
 // ============================================================
-// 时间织城 · 第二关 坎儿井 —— 灰盒版
+// 时间织城 · 第二关 坎儿井
 // 地表探索、绳梯与陶灯制作、井下清淤、修渠与复查
 // 当前玩法说明：docs/游戏说明.md
 // ============================================================
@@ -45,7 +45,7 @@ const G = {
   },
   ui: null,
   goalText: '与守井人对话',
-  hint: 'A/D 移动 · W/空格 跳跃 · E 互动',
+  hint: 'A/D 移动 · 空格 跳跃 · E 互动',
   restored: false,
 };
 const matsCount = () => ['A', 'B', 'C'].filter(k => G.state.materials[k]).length;
@@ -57,21 +57,17 @@ function setHint(t) { G.hint = t; if (G.ui) G.ui.setHint(t); }
 const SaveService = {
   KEY: 'twc_l2_save', VER: 4,
   save() {
-    try {
-      localStorage.setItem(this.KEY, JSON.stringify({ v: this.VER, s: G.state, goal: G.goalText }));
-    } catch (e) { /* §21：写入失败保留内存进度 */ }
+    Campaign.write(this.KEY, { v: this.VER, s: G.state, goal: G.goalText });
   },
   load() {
     try {
-      const d = JSON.parse(localStorage.getItem(this.KEY));
-      if (d && d.v === this.VER) return d;
+      const d = Campaign.read(this.KEY);
+      if (d && d.v === this.VER && d.s && typeof d.s === 'object') return d;
     } catch (e) { /* 损坏存档不静默清空，视为无档 */ }
     return null;
   },
-  clear() { try { localStorage.removeItem(this.KEY); } catch (e) {} },
 };
 (function restore() {
-  if (location.search.includes('reset')) { SaveService.clear(); return; }
   const d = SaveService.load();
   if (d) {
     Object.assign(G.state, d.s); G.restored = true; G.goalText = d.goal || G.goalText;
@@ -95,57 +91,27 @@ const lineAt = (pts, x) => {
   return pts[pts.length - 1][1];
 };
 
-// 地表：碰撞步行线 = 锚点折线（2026-09-30 ?ground=1 交互校准实测值）
+// 地表：碰撞步行线 = 美术实测锚点折线。
 const GROUND_S_ANCHORS = [[0, 537], [3072, 905.3]];
 const surfaceGroundY = x => lineAt(GROUND_S_ANCHORS, x);
 
-// 地下：碰撞步行线 = 双状态锚点折线（0=缺口修复前[2026-09-30 ?ground=1 交互校准]，1=修复后[预留]）
-// GROUND_U_POST 初始复制修复前数据占位——待"修复地面缺口"类剧情/美术确定后，用 ?ground=1 切到修复后状态校准
+// 地下：清淤、修补前后使用对应的美术实测锚点。
 const GROUND_U_PRE = {
   UA: [[0, 629], [503, 627.7], [581, 651.5], [743, 649.5], [814, 636.4], [3072, 639]],
-  // UB 修复前实测（2026-10-03 ?ground=1 校准）：淤积沙堆段 1385—1734 隆起至 ~570
+  // UB 修复前：淤积沙堆段 1385—1734 隆起至约 570。
   UB: [[42,585],[636,590],[721,590],[891,591],[1103,597],[1284.3,598.6],[1385,600],[1433,572.4],[1530.9,569.7],[1600.2,583.4],[1662.1,602.8],[1734.3,631.7],[2036.4,638.6],[3059.8,631.7]],
   UC: [[42, 582], [595, 585.8], [679, 645], [720, 676.5], [827, 672], [878, 649], [933, 599], [2225, 626.8], [2291, 651], [2538, 657.9], [2630, 626.6], [3013, 631]],
 };
 const GROUND_U_POST = {
-  UA: GROUND_U_PRE.UA.map(p => [p[0], p[1]]), // 修复后（预留占位=修复前，待校准）
+  UA: GROUND_U_PRE.UA.map(p => [p[0], p[1]]), // 上游地形不变。
   // UB 修复后 = 清淤后的干净水道步道（2026-10-03 与淤积态沙堆线分离，独立硬编码）
   UB: [[42,585],[636,590],[721,590],[891,591],[1103,597],[1273,600],[1443,601],[1612,603],[2037,609],[3013,609]],
-  // UC 修复后实测（2026-10-03 ?ground=1 校准）：缺口段 677—981 已拉平至 ~591-594
+  // UC 修复后：缺口段 677—981 已拉平至约 591—594。
   UC: [[42,582],[596,589],[677.4,591.7],[733.9,593.1],[805.6,593.1],[865,594.5],[980.8,594.5],[2162.6,620.7],[2245.3,623.4],[2291,651],[2538,657.9],[2601.2,627.6],[3013,631]],
 };
-// 地面状态标志：UC 段由剧情自动推导（修补确认后走修复后地面线，★剧情切换点）
-// ?ground=1 校准工具的工作副本（localStorage 持久防丢），键为 '段_pre' / '段_post' 两套独立线；
-// 参数正式并入 GROUND_U_PRE / GROUND_U_POST 后在校准工具里按 X 清除对应覆盖层
-const GROUND_CAL_KEY = 'twc_groundcal';
-const GROUND_CAL = (() => {
-  try { return JSON.parse(localStorage.getItem(GROUND_CAL_KEY)) || {}; }
-  catch (e) { return {}; }
-})();
-(function migrateGroundCal() { // 兼容旧格式：单键 '段' 即修复后线
-  let moved = false;
-  for (const seg of ['UA', 'UB', 'UC']) {
-    if (Array.isArray(GROUND_CAL[seg]) && !GROUND_CAL[seg + '_post']) {
-      GROUND_CAL[seg + '_post'] = GROUND_CAL[seg];
-      moved = true;
-    }
-    delete GROUND_CAL[seg];
-  }
-  if (moved) { try { localStorage.setItem(GROUND_CAL_KEY, JSON.stringify(GROUND_CAL)); } catch (e) { /* 忽略 */ } }
-})();
-const saveGroundCal = () => {
-  try { localStorage.setItem(GROUND_CAL_KEY, JSON.stringify(GROUND_CAL)); } catch (e) { /* 忽略写入失败 */ }
-};
-const GROUND_EDIT_MODE = location.search.includes('ground'); // ?ground=1 校准模式
+// 清淤或修补完成后切换为对应的地面线。
 const groundUAt = (seg, x) => {
-  // 校准模式下跟随正在编辑的那套线（window.__GROUND_EDIT 由编辑器维护）；
-  // 正常游戏按剧情阶段取线：★切换点 = UC 修补确认后 / UB 清淤完成后走修复后线，其余一律修复前线
-  let post = (seg === 'UC' && G.state.uc.done) || (seg === 'UB' && G.state.ub.done);
-  if (GROUND_EDIT_MODE && window.__GROUND_EDIT && window.__GROUND_EDIT.seg === seg) {
-    post = window.__GROUND_EDIT.line === 'post';
-  }
-  const cal = GROUND_CAL[seg + (post ? '_post' : '_pre')];
-  if (Array.isArray(cal) && cal.length >= 2) return lineAt(cal, x);
+  const post = (seg === 'UC' && G.state.uc.done) || (seg === 'UB' && G.state.ub.done);
   return lineAt(post ? GROUND_U_POST[seg] : GROUND_U_PRE[seg], x);
 };
 
@@ -179,15 +145,12 @@ const SURF = {
   wells: [645, 1594, 2667],                   // 底图烘焙井圈实测x（方案：553/1597/2580）
   mats: { A: 190, B: 1850, C: 2790 },         // 旧绳索/横踏杆/绑扎物（方案：799/1782/2396）
 };
-// 井口贴图摆放：井圈与底图烘焙井圈对齐（2026-09-30 ?wells=1 交互校准实测值）
+// 井口贴图摆放：井圈与底图烘焙井圈对齐。
 const WELL_SPRITE_CONF = [
   { tex: 'WELL_W1', x: 719, y: 659, w: 685 },
   { tex: 'WELL_W2', x: 1578, y: 881, w: 1263 },
   { tex: 'WELL_W3', x: 2302, y: 855, w: 876 },
 ];
-// 井口黑洞标定（[洞心x, 洞心y, 洞宽]；贴图为 tex 像素、底图为底图像素）：?wells=1 校验用
-const WELL_HOLES_TEX = [[363, 272, 185], [715, 440, 250], [1240, 520, 250]];
-const BG_HOLES_PX = [[455, 315, 106], [1128, 403, 125], [1785, 490, 112]];
 // 井口对内仅按下标区分；对玩家一律用序数称呼（剧本不出现 W01 这类编号）
 const WELL_NAMES = ['第一口井', '第二口井', '第三口井'];
 const MAT_NAMES = { A: '旧绳索', B: '横踏杆', C: '固定绑扎物' };
@@ -265,6 +228,7 @@ const LINES = {
 class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() {
+    HeroActor.preload(this);
     loadUISkin(this);
     const bar = this.add.graphics();
     this.add.text(VIEW_W / 2, VIEW_H / 2 - 40, '正在加载……', {
@@ -309,15 +273,14 @@ class BootScene extends Phaser.Scene {
     this.load.image('WELL_W3', `map-assets/ENV_L2_WELL_W03_WEED.png?v=${ASSET_V}`);
   }
   create() {
+    HeroActor.prepare(this);
     prepareUISkin(this);
     // 使用透明素材中的实际物体区域，保留原始 PNG 与透明边缘。
     this.textures.get('LADDER_RUNG').add('craft', 0, 65, 230, 2040, 230);
     this.textures.get('LADDER_BAG').add('craft', 0, 118, 58, 1144, 1017);
     this.makeTextures();
-    // ?ground=1：地面线校准模式，跳过地表流程直接进指定井底段（默认 UC）
-    if (location.search.includes('ground')) {
-      const m = location.search.match(/seg=([a-zA-Z]+)/);
-      this.scene.start('Tunnel', { seg: m ? m[1].toUpperCase() : 'UC' });
+    if (G.restored && G.state.sceneId === 'Tunnel' && SEGMENTS[G.state.lastSeg]) {
+      this.scene.start('Tunnel', { seg: G.state.lastSeg });
     } else {
       this.scene.start('Surface');
     }
@@ -328,12 +291,6 @@ class BootScene extends Phaser.Scene {
       const g = this.make.graphics({ add: false });
       draw(g); g.generateTexture(key, w, h); g.destroy();
     };
-    // 玩家占位方块（56×184，§02 角色视觉高度184）
-    mk('player', 56, 184, g => {
-      g.fillStyle(0xc94f43, 1).fillRoundedRect(2, 2, 52, 180, 10);
-      g.fillStyle(0x8a2c22, 1).fillRect(2, 158, 52, 24);
-      g.lineStyle(3, 0x511b14, 1).strokeRoundedRect(2, 2, 52, 180, 10);
-    });
     // 守井人占位
     mk('npc', 56, 184, g => {
       g.fillStyle(0x3f7a6e, 1).fillRoundedRect(2, 2, 52, 180, 10);

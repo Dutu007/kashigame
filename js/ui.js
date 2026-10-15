@@ -593,149 +593,6 @@ class WorkshopModal {
 
 }
 
-// -------- 调试面板（F2 开关）：按里程碑跳转剧情，免去重复走流程 --------
-// 每档都是"到此为止"的完整状态快照：之后的里程碑自动复位，保证目标追踪与交互门控一致
-const DEBUG_STAGES = [
-  { name: '新档开场',                 spawn: { scene: 'Surface', x: 380 } },
-  { name: '已接任务（清第一口井）',     spawn: { scene: 'Surface', x: 709 } },
-  { name: '已检查第一口井（寻材料）',   spawn: { scene: 'Surface', x: 260 } },
-  { name: '材料齐全（找守井人制作）',   spawn: { scene: 'Surface', x: 430 } },
-  { name: '制作完成（可布梯下井）',     spawn: { scene: 'Surface', x: 709 } },
-  { name: '上游检查完成（清第二口井）', spawn: { scene: 'Surface', x: 1660 } },
-  { name: '中段已通（清第三口井）',     spawn: { scene: 'Surface', x: 2731 } },
-  { name: '下游修补完成（可复查）',     spawn: { scene: 'Tunnel', seg: 'UC', x: 2650 } },
-  { name: '复查完成（回地表汇报）',     spawn: { scene: 'Surface', x: 430 } },
-  { name: '章节完成（自由探索）',       spawn: { scene: 'Surface', x: 700 } },
-  { name: '做完梯子，准备做土陶小油灯',   spawn: { scene: 'Surface', x: 430 }, lampTest: true },
-  { name: '泥已揉好，测试转盘成型', spawn: { scene: 'Surface', x: 430 }, lampTest: true, formingTest: true },
-];
-
-function buildDebugState(i) {
-  if (DEBUG_STAGES[i].lampTest) {
-    const st = buildDebugState(3);
-    st.ladderWorkshopDone = true; st.laddersLeft = 3;
-    if (DEBUG_STAGES[i].formingTest) st.lampCraft = {
-      v: 5, phase: 1, uniformity: 0.9, plasticity: 0.84, moisture: 0.7, air: 0.1,
-      presses: 4, folds: 4, formingActive: true, forming: { progress: 0, warp: 0 },
-    };
-    return st;
-  }
-  const st = {
-    introDone: false, ladderProblemFound: false,
-    materials: { A: false, B: false, C: false },
-    ladderWorkshopDone: false, ladderAssembly: null, lampWorkshopDone: false, lampCraft: null,
-    craftDone: false, laddersLeft: 0,
-    lampOwned: false, lampOn: false,
-    wells: [
-      { weeds: 3, cleared: false, ladder: false },
-      { weeds: 2, cleared: false, ladder: false },
-      { weeds: 2, cleared: false, ladder: false },
-    ],
-    ub: { s0: 0, r1: false, r2: false, r3: false, s1: 0, done: false },
-    uc: { p: [null, null, null], rot: [0, 0, 0], done: false, patch: null },
-    patchIntroSeen: false, verified: false,
-    undergroundVisited: false, uaInspected: false,
-    recordSaved: false, chapterComplete: false,
-    lastWell: null, sceneId: 'Surface',
-  };
-  if (i >= 1) st.introDone = true;
-  if (i >= 2) { st.wells[0].weeds = 0; st.wells[0].cleared = true; st.ladderProblemFound = true; }
-  if (i >= 3) st.materials = { A: true, B: true, C: true };
-  if (i >= 4) { st.ladderWorkshopDone = true; st.lampWorkshopDone = true; st.craftDone = true; st.laddersLeft = 3; st.lampOwned = true; }
-  if (i >= 5) { st.wells[0].ladder = true; st.laddersLeft = 2; st.undergroundVisited = true; st.uaInspected = true; st.lastWell = 0; st.lampOn = true; }
-  if (i >= 6) { st.wells[1].weeds = 0; st.wells[1].cleared = true; st.wells[1].ladder = true; st.laddersLeft = 1; Object.assign(st.ub, { s0: 2, r1: true, r2: true, r3: true, s1: 2, done: true }); st.lastWell = 1; }
-  if (i >= 7) { st.wells[2].weeds = 0; st.wells[2].cleared = true; st.wells[2].ladder = true; st.laddersLeft = 0; st.uc.done = true; st.uc.p = [0, 90, 0]; st.uc.rot = [0, 90, 0]; st.patchIntroSeen = true; st.lastWell = 2; }
-  if (i >= 8) st.verified = true;
-  if (i >= 9) { st.recordSaved = true; st.chapterComplete = true; }
-  st.sceneId = DEBUG_STAGES[i].spawn.scene;
-  if (st.sceneId === 'Tunnel') st.lastSeg = DEBUG_STAGES[i].spawn.seg;
-  return st;
-}
-
-class DebugPanel {
-  constructor(scene) {
-    this.scene = scene;
-    this.open = false;
-    const w = 440, rowH = 50, n = DEBUG_STAGES.length;
-    const h = 100 + 56 + n * (rowH + 10);
-    // 右侧 330px 留给开发用的调整工具面板（?tools=1 时出现），避免两者重叠
-    const toolGutter = location.search.indexOf('tools=1') >= 0 ? 336 : 0;
-    const px = Math.max(24, VIEW_W - toolGutter - w - 24), py = 90;
-    this.root = scene.add.container(0, 0).setDepth(200).setVisible(false);
-    const g = scene.add.graphics();
-    ornateFrame(g, px, py, w, h, { fill: 0x14332e, accent: UI_COLORS.red, radius: 14, outerWidth: 2 });
-    this.root.add(g);
-    this.root.add(scene.add.text(px + 24, py + 16, '调试 · 剧情跳转', {
-      fontFamily: FONT, fontSize: '26px', color: '#e8c979', resolution: 2,
-    }));
-    this.root.add(scene.add.text(px + w - 24, py + 22, 'F2 开/关', {
-      fontFamily: FONT, fontSize: '18px', color: '#d8cdb2', resolution: 2,
-    }).setOrigin(1, 0));
-    // 开发入口：一键加载土陶主体位置调整工具（tools/place-tuner.js，独立覆盖层，不改游戏状态）。
-    // 点过之后记住开关，普通刷新（不带 ?tools=1）也会自动加载；再点一次关闭。
-    const toolOn = () => { try { return localStorage.getItem('twc_tools') === '1'; } catch (e) { return false; } };
-    const toolBtn = scene.add.graphics();
-    titleRibbon(toolBtn, px + 24, py + 46, w - 48, 34, UI_COLORS.red);
-    toolBtn.setInteractive(new Phaser.Geom.Rectangle(px + 24, py + 46, w - 48, 34), Phaser.Geom.Rectangle.Contains);
-    toolBtn.on('pointerover', () => toolBtn.setAlpha(0.84));
-    toolBtn.on('pointerout', () => toolBtn.setAlpha(1));
-    toolBtn.on('pointerdown', () => {
-      if (window.__placeTool) {                      // 已开着 → 关掉并忘记开关
-        try { window.__placeTool.destroy(); localStorage.removeItem('twc_tools'); } catch (e) {}
-        if (G.ui) G.ui.toast.show('已关闭调整工具', '刷新页面后也不会再自动出现');
-        return;
-      }
-      try { localStorage.setItem('twc_tools', '1'); } catch (e) {}
-      const s = document.createElement('script');
-      s.src = 'tools/place-tuner.js?v=' + Date.now();
-      s.onerror = () => { if (G.ui) G.ui.toast.show('加载失败', '请确认 tools/place-tuner.js 存在，且用开发服务器打开'); };
-      document.body.appendChild(s);
-    });
-    this.root.add(toolBtn);
-    this.root.add(scene.add.text(px + w / 2, py + 63,
-      toolOn() ? '关闭「主体位置调整」工具' : '加载「主体位置调整」工具', {
-        fontFamily: FONT, fontSize: '20px', color: '#f7ecd4', resolution: 2,
-    }).setOrigin(0.5, 0.5));
-    DEBUG_STAGES.forEach((st, i) => {
-      const by = py + 68 + 56 + i * (rowH + 10);
-      const btn = scene.add.graphics();
-      titleRibbon(btn, px + 24, by, w - 48, rowH, UI_COLORS.teal);
-      btn.setInteractive(new Phaser.Geom.Rectangle(px + 24, by, w - 48, rowH), Phaser.Geom.Rectangle.Contains);
-      btn.on('pointerdown', () => this.jumpTo(i));
-      btn.on('pointerover', () => btn.setAlpha(0.84));
-      btn.on('pointerout', () => btn.setAlpha(1));
-      this.root.add(btn);
-      this.root.add(scene.add.text(px + 40, by + rowH / 2, i + '　' + st.name, {
-        fontFamily: FONT, fontSize: '22px', color: '#f7ecd4', resolution: 2,
-      }).setOrigin(0, 0.5));
-    });
-    this.toggleKey = scene.input.keyboard.addKey('F2');
-    scene.input.keyboard.addCapture('F2');
-  }
-  toggle() { this.open = !this.open; this.root.setVisible(this.open); }
-  jumpTo(i) {
-    const stage = DEBUG_STAGES[i];
-    const d = this.scene.dialogue;                       // 带着对话/弹窗跳转会残留，先无副作用关闭
-    if (d.isOpen) { d.onDone = null; d.close(); }
-    const ws = this.scene.workshop;
-    if (ws.opened) { ws.onDone = null; ws.close(false); }
-    G.state = buildDebugState(i);
-    G.restored = false;
-    SaveService.save();
-    const game = window.__game;
-    const cur = game.scene.getScenes(true).find(s => s.scene.key === 'Surface' || s.scene.key === 'Tunnel');
-    const target = stage.spawn.scene;
-    const data = target === 'Tunnel' ? { seg: stage.spawn.seg } : {};
-    if (cur) cur.scene.start(target, data); else game.scene.start(target, data);
-    this.scene.time.delayedCall(650, () => {
-      const sc = game.scene.getScene(target);
-      if (sc && sc.player && stage.spawn.x != null) sc.player.x = stage.spawn.x;
-      if (G.ui) G.ui.toast.show('调试跳转', stage.name);
-    });
-    this.open = false; this.root.setVisible(false);
-  }
-}
-
 // -------- UI 场景 --------
 class UIScene extends Phaser.Scene {
   constructor() { super('UI'); }
@@ -743,7 +600,6 @@ class UIScene extends Phaser.Scene {
     this.dialogue = new DialogueBox(this);
     this.toast = new Toast(this);
     this.workshop = new WorkshopModal(this);
-    this.debugPanel = new DebugPanel(this);
 
     // 目标追踪（左上羊皮纸签：宽度随文本自适应，避免溢出）
     this.trackerPanel = skinFrame(this, 'goal', 24, 12, 640, 100, { cuts: [0.26, 0.12, 0.3, 0.3] }).setDepth(310);
@@ -784,7 +640,6 @@ class UIScene extends Phaser.Scene {
     this.input.keyboard.addCapture('SPACE,E');
   }
   update() {
-    if (Phaser.Input.Keyboard.JustDown(this.debugPanel.toggleKey)) this.debugPanel.toggle();
     if (this.workshop && this.workshop.opened) {
       this.workshop.update(this.time.now, this.game.loop.delta);
       return;
