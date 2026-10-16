@@ -1,0 +1,12 @@
+# 本地调试产物与临时浏览器数据
+/output/
+/tmp/
+/rubbish/
+__pycache__/
+*.pyc
+
+# OS / 编辑器噪音
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp

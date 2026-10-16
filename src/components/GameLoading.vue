@@ -1,8 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import loadingBackgroundUrl from '../../首页加载.png'
 import textureUrl from '../../加载动画所用材质.png'
 
+const props = defineProps({
+  destination: { type: String, default: '喀什小镇' },
+  ready: { type: Boolean, default: true },
+})
 const emit = defineEmits(['complete'])
 const progress = ref(0)
 const loadingMessage = ref('正在整理旅途中的行囊……')
@@ -13,6 +17,8 @@ let messageTimer = null
 let completeTimer = null
 let dotTimer = null
 let startedAt = 0
+let animationFinished = false
+let finishing = false
 const duration = 4300
 
 const messages = [
@@ -44,13 +50,22 @@ function tick(now) {
       : elapsed < 0.9
         ? 0.7 + (elapsed - 0.72) / 0.18 * 0.2
         : 0.9 + (elapsed - 0.9) / 0.1 * 0.1
-  progress.value = Math.min(100, Math.round(eased * 100))
+  progress.value = Math.min(props.ready ? 100 : 95, Math.round(eased * 100))
   updateMessage(progress.value)
   if (elapsed < 1) frameId = window.requestAnimationFrame(tick)
-  else finish()
+  else {
+    animationFinished = true
+    if (props.ready) finish()
+  }
 }
 
+watch(() => props.ready, ready => {
+  if (ready && animationFinished) finish()
+})
+
 function finish() {
+  if (finishing) return
+  finishing = true
   progress.value = 100
   loadingMessage.value = '旅程已经准备好了！'
   window.clearTimeout(completeTimer)
@@ -76,7 +91,7 @@ onBeforeUnmount(() => {
 <template>
   <main class="game-loading" :class="{ 'is-leaving': isLeaving }" :style="{ '--loading-bg': 'url(' + loadingBackgroundUrl + ')' }" aria-label="游戏加载中">
     <section class="loading-panel" aria-live="polite">
-      <h1>正在前往喀什小镇<span class="title-dots">{{ dots }}</span></h1>
+      <h1>正在前往{{ destination }}<span class="title-dots">{{ dots }}</span></h1>
       <div class="loading-track" role="progressbar" :aria-valuenow="progress" aria-valuemin="0" aria-valuemax="100">
         <div class="loading-fill" :style="progressStyle"><span class="loading-sheen" /></div>
       </div>

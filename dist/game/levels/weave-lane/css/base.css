@@ -1,0 +1,16 @@
+/* 全局基础：布局、侧栏、按钮 */
+    :root{font-family:system-ui,"Microsoft YaHei",sans-serif;color:#f9f1de;background:#171b21}
+    *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;overflow:hidden;background:#101317}main{width:100%;height:100vh;height:100dvh;display:grid;place-items:center}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    h1{font-size:22px;margin:0 0 4px}header p{margin:0;color:#c6c1b5;font-size:14px}
+    button{border:1px solid #807663;background:#34322e;color:#fff4dc;border-radius:8px;padding:9px 12px;cursor:pointer}
+    button:hover,button:focus-visible{background:#5e4935}button.active{background:#9b6240;border-color:#eac28b}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;margin-top:15px}
+    .side{background:#272729;border:1px solid #514a40;border-radius:10px;padding:16px}
+    .side h2{font-size:18px;margin:0 0 8px}.side p,.side li{line-height:1.55;font-size:14px;color:#dbd5c9}
+    .side ul{padding-left:20px;margin:8px 0}.tabs{display:none;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .status{border-left:3px solid #e3ac6e;padding:7px 10px;background:#423629;min-height:54px}
+    .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#d9d0c3;margin-top:10px}
+    .legend b{display:inline-block;width:13px;height:13px;border-radius:50%;vertical-align:-2px;margin-right:5px}
+    .note{color:#beb6a9;font-size:13px;line-height:1.6;margin-top:10px}
+    @media(max-width:950px){.layout{grid-template-columns:1fr}.side{order:2}}
