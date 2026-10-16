@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>时间织城 · 第一章 织梦巷</title>
+  <link rel="stylesheet" href="css/base.css?v=merged2">
+  <link rel="stylesheet" href="css/world.css?v=delivery1">
+  <link rel="stylesheet" href="css/ambient.css?v=7">
+  <link rel="stylesheet" href="css/dialogue.css?v=merged2">
+  <link rel="stylesheet" href="css/workshop.css?v=merged2">
+  <link rel="stylesheet" href="css/workshop-skin.css?v=3">
+  <link rel="stylesheet" href="css/thread-reference.css?v=3">
+</head>
+<body>
+<section id="characterSetup" aria-label="选择主角">
+  <div class="setup-card">
+    <div class="setup-kicker">时间织城 · 第一章 织梦巷</div>
+    <h2>选择你的主角</h2>
+    <p>男主角艾德或女主角阿依苏，将替你走完这段织梦巷。使用 WASD 或方向键移动，靠近人物或工作台时按 E 互动。</p>
+    <div class="choice-grid" id="characterChoices">
+      <button type="button" class="character-choice" id="choice-aide"><span class="choice-art aide" aria-hidden="true"></span><span class="choice-copy"><strong>艾德</strong><small>男主角 · 爱打听的小画师</small></span></button>
+      <button type="button" class="character-choice selected" id="choice-aysu"><span class="choice-art aysu" aria-hidden="true"></span><span class="choice-copy"><strong>阿依苏</strong><small>女主角 · 织匠家的孙女</small></span></button>
+    </div>
+    <button id="startJourney" class="primary" type="button">开始探索</button>
+  </div>
+</section>
+<section id="patternWorkshop" hidden aria-label="纹样工作台">
+  <div class="workshop-shell">
+    <div class="workshop-head"><div><div id="workshopKicker" class="workshop-kicker">老织坊 · 纹样工作台</div><h2 id="workshopTitle">纹样册</h2></div><button id="workshopClose" class="workshop-close" type="button" title="退出工作台">×</button></div>
+    <div id="albumView" hidden>
+      <div class="album-wrap">
+        <div class="workshop-pane"><h3>拓样集</h3><p>阿木提拓下来的纹样，先挑一张合眼缘的。</p><div id="albumGrid" class="album-grid"></div></div>
+        <div class="workshop-pane"><div id="albumPreview"></div><h3 style="margin-top:10px">白坯预览</h3><canvas id="albumBlank" width="360" height="360"></canvas></div>
+        <aside class="workshop-pane album-side"><h3>这一张</h3><p id="albumName" style="font-weight:700"></p><p id="albumMeaning"></p><p>选定后：辨纹认识结构 → 扎束定留白 → 染院配色。</p><button id="albumConfirm" class="workshop-action" type="button">就用这张</button></aside>
+      </div>
+    </div>
+    <div id="threadingView">
+      <div class="workshop-layout">
+        <aside class="workshop-pane" id="cluePane"></aside>
+        <div><div id="threadBoard" class="thread-board"><canvas id="threadCanvas" width="640" height="640"></canvas></div><div class="round-meter" id="roundMeter"><span></span><span></span><span></span></div><div id="threadHelp" class="thread-help">按住金色「起」点不松手，顺着淡色拓样上的纹样线条拖过一个个点，丝线会自动连上，一直拖到「终」点；单击节点也能逐点连。方向拖错了不会断线，退回重拖即可，也可点「撤回一段」。</div></div>
+        <aside class="workshop-pane"><h3>右侧 · 白坯预览</h3><p>每连完一轮，纹样就往白坯上多落一段。</p><div id="threadPreview" class="clue-card">当前轮：外轮廓<br><small>尚未连接</small></div><canvas id="blankPreview" width="220" height="220"></canvas><button id="hintBtn" class="workshop-action secondary" type="button">查看提示</button><button id="replayBtn" class="workshop-action secondary" type="button">再看一遍示范</button><button id="guideBtn" class="workshop-action secondary" type="button" hidden>这轮照着走</button><button id="threadUndo" class="workshop-action secondary" type="button">撤回一段</button></aside>
+      </div>
+    </div>
+    <div id="puzzleView" hidden class="workshop-pane puzzle-pane">
+      <h3>把白坯纹样拼回去</h3>
+      <p>刚织好的无色纹样被竖直切成了 8 条等宽竖片，顺序已经打乱。照着上方的完整纹样，<b>按住竖片左右拖动</b>排回原来的顺序——竖片不会旋转、也不会翻面；当排列和原图完全一致时，纹样就会重新拼合。</p>
+      <div class="puzzle-target"><canvas id="puzzleRef" width="160" height="160"></canvas><small>完整纹样 · 照着它拼</small></div>
+      <div id="puzzleBoard" class="puzzle-board" aria-label="竖片拼板"></div>
+      <p id="puzzleStatus" class="puzzle-status"></p>
+      <div class="puzzle-actions"><button id="puzzleReshuffle" class="workshop-action secondary" type="button">重新打乱</button></div>
+    </div>
+    <div id="weavingView" hidden>
+      <div class="workshop-layout"><aside class="workshop-pane"><h3>织机示范</h3><p>阿木提先做一遍，操作阶段只保留阿依苏。失误只影响当前一步。</p><div class="clue-card">已染好的经线<br><small id="weaveBlueprint">纹样：01 杏花卷草</small></div><p id="demoHint"></p><button id="demoSkip" class="workshop-action secondary" type="button" hidden>跳过示范</button></aside><div class="thread-board"><canvas id="weaveCanvas" width="720" height="470"></canvas><div id="weaveActions" class="dialogue-options" style="position:absolute;left:8%;right:8%;bottom:28px;z-index:3"><button data-weave="steady" type="button">稳线</button><button data-weave="shuttle" type="button">穿梭</button><button data-weave="tighten" type="button">收紧</button></div></div><aside class="workshop-pane"><h3>织造进度</h3><div id="weaveProgress" class="clue-card">第 1 / 3 轮<br><small>等待动作</small></div></aside></div>
+    </div>
+    <div id="dyeView" hidden>
+      <div class="dye-layout">
+        <div class="workshop-pane"><h3>染缸与白坯</h3><p id="dyeHint"></p><canvas id="dyePreview" width="300" height="300"></canvas><div id="dyePool" class="dye-pool"><span id="dyePoolHint"></span></div></div>
+        <aside class="workshop-pane">
+          <div id="mixView"><h3>配缸</h3><div id="vatMix"></div><div class="dye-footer"><button id="mixDefault" class="workshop-action secondary" type="button">按蓝本来</button><button id="mixStart" class="workshop-action" type="button">开始染线</button></div></div>
+          <div id="dipView" hidden><h3>三口染缸</h3><div id="vatTabs" class="warp-row"></div><div class="dip-block"><div class="dip-status" id="dipStatus"></div><div class="dip-track" id="dipTrack"><div class="dip-fill" id="dipFill"></div><div class="dip-zone" id="dipZone"></div></div><div class="dip-controls"><button id="dipStart" class="workshop-action" type="button">浸入</button><button id="dipStop" class="workshop-action secondary" type="button" disabled>取出</button></div></div><div class="dye-footer"><button id="applyDye" class="workshop-action" type="button" disabled>完成染线</button></div></div>
+        </aside>
+      </div>
+    </div>
+    <div id="coloringView" hidden>
+      <div class="coloring-shell">
+        <aside id="inspirePane" class="inspire-pane workshop-pane">
+          <div class="inspire-head"><h3>配色灵感</h3><button id="inspireToggle" type="button" title="收起 / 展开">‹</button></div>
+          <p class="inspire-note">只作建议，不会替你上色。</p>
+          <div id="inspireCards"></div>
+        </aside>
+        <div class="coloring-center">
+          <div id="coloringStage">
+            <canvas id="coloringCanvas" width="1254" height="1254"></canvas>
+            <div id="coloringCursor"></div>
+            <div id="coloringHint" class="coloring-hint">先选一种颜色，再点击想染的纹样。</div>
+            <div class="canvas-zoom"><button id="czIn" type="button" title="放大">＋</button><button id="czOut" type="button" title="缩小">－</button><button id="czFit" type="button" title="适应画布">▣</button><button id="coloringHelp" type="button" title="帮助">？</button></div>
+          </div>
+          <div class="coloring-toolbar">
+            <button id="btnUndo" type="button">撤销</button>
+            <button id="btnRedo" type="button">重做</button>
+            <label class="tool-toggle"><input type="checkbox" id="tgSym" checked>对称联动</label>
+            <label class="tool-toggle"><input type="checkbox" id="tgKind">同类一起染</label>
+            <button id="btnReset" type="button" class="secondary">重置</button>
+            <button id="btnPreview" type="button" class="primary" disabled>成品预览</button>
+          </div>
+        </div>
+        <aside class="dye-pane workshop-pane">
+          <h3>染液色板</h3>
+          <div id="dyeDishGrid" class="dye-dish-grid"></div>
+          <div class="current-color"><span id="currentSwatch"></span><span id="currentName">未选色</span><button id="soundToggle" type="button" title="音效开关">🔊</button></div>
+          <label class="work-name">作品名<input id="workNameInput" maxlength="20"></label>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="hangingOverlay" hidden aria-label="成品预览">
+  <div class="hanging-card"><h3 style="margin:0 0 6px;color:#512b22">成品预览 · 悬挂挂布</h3><canvas id="hangingCanvas" width="640" height="880"></canvas><div class="hanging-actions"><button id="hangingBack" type="button">继续修改</button><button id="hangingConfirm" class="primary" type="button">确认配色</button></div></div>
+</section>
+<section id="dyePerform" hidden aria-label="染线演出">
+  <div class="perform-card"><canvas id="performCanvas" width="520" height="520"></canvas><p id="performText">染线中……颜色正沿丝线渗进经线</p><button id="performSkip" type="button">跳过</button></div>
+</section>
+<section id="confirmModal" hidden aria-label="确认">
+  <div class="confirm-card"><p id="confirmText"></p><div class="confirm-actions"><button id="confirmNo" type="button">取消</button><button id="confirmYes" class="primary" type="button">确定</button></div></div>
+</section>
+<section id="paletteModal" hidden aria-label="选颜色">
+  <div class="palette-card"><h3 id="paletteTitle" style="margin:0;font-size:17px;color:#66392b">选颜色</h3><div id="paletteGrid"></div><button id="paletteClose" class="workshop-action secondary" type="button">先不换</button></div>
+</section>
+<div id="freezeOverlay" aria-label="白坯纹样"><div class="freeze-card"><canvas id="freezeCanvas" width="480" height="480"></canvas><p>白坯纹样 · 已拼合</p></div></div>
+<section id="compareOverlay" hidden aria-label="成绸对比">
+  <div class="compare-card"><h3 style="margin:0 0 4px;color:#512b22">晾晒架上 —— 你的第一块绸</h3><p id="compareNote" style="margin:0"></p><div class="compare-row"><div><canvas id="silkOrigin" width="560" height="373"></canvas><small>蓝本 · 杏花卷草</small></div><div><canvas id="silkMine" width="560" height="373"></canvas><small>你的成绸</small></div></div><button id="silkCollect" class="workshop-action" type="button">收入我的纹样册</button></div>
+</section>
+<main aria-label="织梦巷游戏画面">
+    <div class="board" id="board"><img id="background" alt="当前场景"><div id="avatar" aria-label="阿依苏"><canvas width="180" height="230"></canvas></div><div id="amuti"><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="amutiDye" hidden><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="foreground" aria-hidden="true"></div><div id="interactionHint" hidden></div><div class="function-bar" id="functionBar" aria-label="对话功能" hidden><button id="skipButton" type="button" title="跳过当前对话">»</button></div><div id="dialoguePanel" class="dialogue-panel" hidden><div id="dialoguePortrait" class="dialogue-portrait" aria-hidden="true"></div><div class="dialogue-copy"><div id="dialogueSpeaker" class="dialogue-speaker"></div><div id="dialogueText" class="dialogue-text"></div><div id="dialogueOptions" class="dialogue-options"></div><div class="dialogue-actions"><button id="dialogueNext" class="dialogue-next" type="button">继续 ▾</button></div></div></div><div id="toast" hidden></div><div id="wipe">沿着蓝色台阶走到上层</div></div>
+</main>
+
+<script src="../../shared/characters.js"></script>
+  <script src="../../shared/campaign.js"></script>
+  <script src="../../shared/chapter-bridge.js"></script>
+  <script src="js/data/scenes.js"></script>
+  <script src="js/data/characters.js?v=merged2"></script>
+  <script src="js/data/amuti_dialogue.js?v=16"></script>
+  <script src="js/data/craft.js"></script>
+  <script src="js/data/patterns.js"></script>
+  <script src="js/data/regions.js"></script>
+  <script src="js/data/region-layout.js"></script>
+  <script src="js/data/region-hit.js"></script>
+  <script src="js/data/region-assets.js"></script>
+  <script src="js/core/state.js?v=merged2"></script>
+  <script src="js/core/save.js"></script>
+  <script src="js/core/sound.js"></script>
+  <script src="js/core/dialogue.js?v=2"></script>
+  <script src="js/core/sprite.js?v=delivery1"></script>
+  <script src="js/core/world.js?v=merged2"></script>
+  <script src="js/data/ambient-scenes.js?v=22"></script>
+  <script src="js/core/ambient.js?v=22"></script>
+  <script src="js/core/ambient-hook.js"></script>
+  <script src="js/workshop/renderer.js?v=merged2"></script>
+  <script src="js/workshop/finished-silk.js"></script>
+  <script src="js/workshop/album.js"></script>
+  <script src="js/workshop/workshop.js"></script>
+  <script src="js/workshop/threading.js?v=14"></script>
+  <script src="js/workshop/puzzle.js"></script>
+  <script src="js/workshop/dyeing.js"></script>
+  <script src="js/workshop/coloring.js?v=merged2"></script>
+  <script src="js/workshop/weaving.js?v=merged2"></script>
+  <script src="js/core/progress.js?v=2"></script>
+  <script src="js/core/main.js?v=merged2"></script>
+  <script src="js/core/guide.js"></script>
+</body>
+</html>
