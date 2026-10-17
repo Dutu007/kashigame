@@ -30,10 +30,11 @@ class SurfaceScene extends Phaser.Scene {
 
     // （布梯后不再显示绳梯贴图：布设即下井，转场画面由后续视频替代）
 
-    // ---- 守井人保留矩形；主角复用第一关的动画素材 ----
-    this.npc = this.add.image(SURF.npcX, surfaceGroundY(SURF.npcX) + 6, 'npc')
+    // ---- 守井人使用透明立绘，按有效轮廓缩放并以靴底贴地 ----
+    this.npc = this.add.image(SURF.npcX, surfaceGroundY(SURF.npcX), 'npc', 'body')
       .setOrigin(0.5, 1).setDepth(10);
-    this.add.text(SURF.npcX, surfaceGroundY(SURF.npcX) - 206, '守井人', {
+    this.npc.setScale(184 / this.npc.height);
+    this.add.text(SURF.npcX, this.npc.y - this.npc.displayHeight - 22, '守井人', {
       fontFamily: FONT, fontSize: '20px', color: '#f7ecd4', resolution: 2,
     }).setOrigin(0.5).setDepth(11).setStroke('#1a120b', 4);
 

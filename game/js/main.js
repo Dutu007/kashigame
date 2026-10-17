@@ -224,12 +224,13 @@ const LINES = {
   ],
 };
 
-// -------- Boot：加载长图与井口物件，生成占位纹理 --------
+// -------- Boot：加载场景、人物与道具，生成交互标记 --------
 class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() {
     HeroActor.preload(this);
     loadUISkin(this);
+    this.load.image('npc', 'assets/characters/keeper/keeper_idle.png?v=1');
     const bar = this.add.graphics();
     this.add.text(VIEW_W / 2, VIEW_H / 2 - 40, '正在加载……', {
       fontFamily: FONT, fontSize: '24px', color: '#e8d9b0',
@@ -278,6 +279,8 @@ class BootScene extends Phaser.Scene {
     // 使用透明素材中的实际物体区域，保留原始 PNG 与透明边缘。
     this.textures.get('LADDER_RUNG').add('craft', 0, 65, 230, 2040, 230);
     this.textures.get('LADDER_BAG').add('craft', 0, 118, 58, 1144, 1017);
+    // 守井人原图 1024×1536；有效轮廓帧去除透明留白，使身高与靴底锚点准确。
+    this.textures.get('npc').add('body', 0, 189, 95, 660, 1389);
     this.makeTextures();
     if (G.restored && G.state.sceneId === 'Tunnel' && SEGMENTS[G.state.lastSeg]) {
       this.scene.start('Tunnel', { seg: G.state.lastSeg });
@@ -291,12 +294,6 @@ class BootScene extends Phaser.Scene {
       const g = this.make.graphics({ add: false });
       draw(g); g.generateTexture(key, w, h); g.destroy();
     };
-    // 守井人占位
-    mk('npc', 56, 184, g => {
-      g.fillStyle(0x3f7a6e, 1).fillRoundedRect(2, 2, 52, 180, 10);
-      g.fillStyle(0xc9973f, 1).fillRect(2, 26, 52, 8);
-      g.lineStyle(3, 0x1f4038, 1).strokeRoundedRect(2, 2, 52, 180, 10);
-    });
     // 材料点标记（金色菱形，图标独立不烘焙，§18）
     mk('diamond', 26, 26, g => {
       g.fillStyle(0xc9973f, 1).fillTriangle(13, 1, 25, 13, 13, 25).fillTriangle(1, 13, 13, 1, 13, 25);
