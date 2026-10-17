@@ -1,1 +1,0 @@
-const characters=GameCharacters.definitions;

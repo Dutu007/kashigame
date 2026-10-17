@@ -1,11 +1,24 @@
 @echo off
-cd /d %~dp0
-netstat -ano | findstr ":8080" | findstr "LISTENING" >nul 2>&1
-if %errorlevel%==0 (
-  echo Server already running on port 8080, opening the game page.
-) else (
-  echo Starting game server (minimized window)...
-  start "kashigame-server" /min python server.py 8080
-  timeout /t 1 >nul
+setlocal
+cd /d "%~dp0"
+where node >nul 2>&1
+if errorlevel 1 (
+  echo Please install Node.js 22, then run this launcher again.
+  pause
+  exit /b 1
 )
-start "" "http://localhost:8080/"
+where npm.cmd >nul 2>&1
+if errorlevel 1 (
+  echo npm was not found. Please repair the Node.js installation.
+  pause
+  exit /b 1
+)
+if not exist "node_modules\.bin\vite.cmd" (
+  echo Installing project dependencies...
+  call npm.cmd ci
+  if errorlevel 1 (
+    pause
+    exit /b 1
+  )
+)
+call npm.cmd run dev -- --host 127.0.0.1 --port 8080 --open

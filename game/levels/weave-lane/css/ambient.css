@@ -1,0 +1,24 @@
+/* 环境微动效层：位于背景(z1)之上、交互覆盖(z3)之下，不接收指针事件 */
+#ambient{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.ambient-layer{position:absolute;background-repeat:no-repeat;background-size:100% 100%;
+  backface-visibility:hidden;transform:translate3d(0,0,0)}
+.ambient-fx{position:absolute;inset:0;width:100%;height:100%}
+.ambient-clean-background{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.ambient-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;color:#eed9b5;font-size:12px}
+.ambient-controls button{padding:5px 9px;font-size:12px;min-height:28px}
+.ambient-controls button[aria-pressed="true"]{border-color:#edc579;background:#5f4325}
+.ambient-locate #ambient .ambient-layer{outline:2px dashed #ffe6a0;outline-offset:-2px}
+
+/* 极慢速光照：暖光自左上、微凉自右侧；幅度小，不做整画明暗呼吸 */
+.ambient-light{position:absolute;inset:-2%;
+  background:linear-gradient(112deg,
+    rgba(255,216,150,.115) 0%,
+    rgba(255,228,180,.045) 28%,
+    rgba(0,0,0,0) 47%,
+    rgba(150,186,255,.05) 100%);
+  will-change:transform,opacity}
+
+@media (prefers-reduced-motion:reduce){
+  #ambient{display:none}
+  #ambient[data-motion-enabled="true"]{display:block}
+}

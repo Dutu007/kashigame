@@ -1,0 +1,86 @@
+{
+  "baseWidth": 1672,
+  "baseHeight": 941,
+  "positions": {
+    "level1": {
+      "x": 585,
+      "y": 345,
+      "width": 369,
+      "height": 288,
+      "confidence": 0.7451,
+      "method": "seed-fallback"
+    },
+    "level2": {
+      "x": 328,
+      "y": 438,
+      "width": 281,
+      "height": 160,
+      "confidence": 0.7307,
+      "method": "seed-fallback"
+    },
+    "level3": {
+      "x": 141,
+      "y": 227,
+      "width": 287,
+      "height": 148,
+      "confidence": 0.7359,
+      "method": "seed-fallback"
+    },
+    "level4": {
+      "x": 193,
+      "y": 573,
+      "width": 283,
+      "height": 152,
+      "confidence": 0.7267,
+      "method": "seed-fallback"
+    },
+    "level5": {
+      "x": 402,
+      "y": 60,
+      "width": 500,
+      "height": 332,
+      "confidence": 0.7353,
+      "method": "seed-fallback"
+    },
+    "level6": {
+      "x": 948,
+      "y": 197,
+      "width": 278,
+      "height": 190,
+      "confidence": 0.7471,
+      "method": "seed-fallback"
+    },
+    "level7": {
+      "x": 1030,
+      "y": 418,
+      "width": 281,
+      "height": 161,
+      "confidence": 0.732,
+      "method": "seed-fallback"
+    },
+    "level8": {
+      "x": 1079,
+      "y": 532,
+      "width": 451,
+      "height": 291,
+      "confidence": 0.7327,
+      "method": "seed-fallback"
+    },
+    "level9": {
+      "x": 1329,
+      "y": 268,
+      "width": 284,
+      "height": 179,
+      "confidence": 0.7581,
+      "method": "seed-fallback"
+    },
+    "level10": {
+      "x": 1299,
+      "y": 0,
+      "width": 278,
+      "height": 197,
+      "confidence": 0.7664,
+      "method": "seed-fallback"
+    }
+  }
+}
