@@ -15,6 +15,8 @@ fs.mkdirSync(output, { recursive: true });
   try {
     for (const hero of ['aide', 'aysu']) {
       const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+      // A reload also waits for the embedded chapter's artwork to finish loading.
+      context.setDefaultNavigationTimeout(60000);
       await context.addInitScript(() => {
         localStorage.setItem('twc_tools', '1');
         localStorage.setItem('twc_groundcal', JSON.stringify({ UA_pre: [[0, -3000], [3072, -3000]] }));
@@ -35,6 +37,7 @@ fs.mkdirSync(output, { recursive: true });
       if (hero === 'aide') await page.screenshot({ path: path.join(output, 'merged-menu.png'), fullPage: true });
       await page.locator('#enterWeave').click();
       let first = await chapterFrame(page, 'levels/weave-lane/');
+      await first.waitForFunction(() => typeof document.getElementById('startJourney')?.onclick === 'function');
       await first.locator('#choice-' + hero).click();
       await first.locator('#startJourney').click();
       await first.locator('#skipButton').click();
@@ -121,9 +124,18 @@ fs.mkdirSync(output, { recursive: true });
       await readyKarez(second, 'Surface');
       let actor = await second.evaluate(() => {
         const s = game.scene.getScene('Surface');
-        return { hero: s.player.heroId, texture: s.player.texture.key, npc: s.npc.texture.key, height: s.player.displayHeight };
+        return {
+          hero: s.player.heroId, texture: s.player.texture.key, height: s.player.displayHeight,
+          npc: s.npc.texture.key, npcIsImage: s.npc.texture.getSourceImage() instanceof HTMLImageElement,
+          npcSourceHeight: s.npc.texture.getSourceImage().naturalHeight,
+          npcHeight: s.npc.displayHeight, npcGroundGap: s.npc.y - surfaceGroundY(SURF.npcX),
+        };
       });
       assert.equal(actor.hero, hero); assert.ok(actor.texture.startsWith(`hero:${hero}:`)); assert.equal(actor.npc, 'npc');
+      assert.equal(actor.npcIsImage, true);
+      assert.ok(actor.npcSourceHeight > 184);
+      assert.ok(Math.abs(actor.npcHeight - 184) < 0.01);
+      assert.equal(actor.npcGroundGap, 0);
       assert.ok(actor.height > 180 && actor.height < 220);
       await page.waitForTimeout(2700);
       await page.screenshot({ path: path.join(output, `karez-surface-${hero}.png`) });
@@ -198,7 +210,7 @@ fs.mkdirSync(output, { recursive: true });
       assert.match(await page.locator('#karezStatus').innerText(), /已完成/);
       assert.deepEqual(errors, [], `JavaScript errors for ${hero}`);
       assert.deepEqual(missing, [], `Missing assets for ${hero}`);
-      console.log(`PASS ${hero}: locked routes, selection, dye/receipt exit and reload, no duplicate receipt, workshop checkpoint, chapter transitions, movement, NPC placeholder, lamp facing, tunnel resume, both completions`);
+      console.log(`PASS ${hero}: locked routes, selection, dye/receipt exit and reload, no duplicate receipt, workshop checkpoint, chapter transitions, movement, keeper sprite and ground alignment, lamp facing, tunnel resume, both completions`);
       await context.close();
     }
   } catch (error) {
