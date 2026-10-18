@@ -19,13 +19,13 @@ const displayCharacter = computed(() => hoveredCharacter.value || selectedCharac
 
 const characters = {
   male: {
-    name: '阿依木',
+    name: '艾德',
     traits: '热情 · 好奇 · 喜欢探索古城',
     quote: '“走吧，看看古城里藏着什么故事！”',
     image: maleCharacterUrl,
   },
   female: {
-    name: '阿依娜',
+    name: '阿依苏',
     traits: '细心 · 灵动 · 擅长发现文化线索',
     quote: '“慢一点，也许线索就在我们身边。”',
     image: femaleCharacterUrl,
@@ -85,7 +85,7 @@ onBeforeUnmount(() => {
         class="character-hitbox"
         :class="{ 'is-feedback': feedbackCharacter === 'male' }"
         type="button"
-        aria-label="选择男性角色阿依木"
+        aria-label="选择男性角色艾德"
         :aria-pressed="selectedCharacter === 'male'"
         @mouseenter="hoveredCharacter = 'male'"
         @mouseleave="hoveredCharacter = null"
@@ -94,7 +94,7 @@ onBeforeUnmount(() => {
         @click="chooseCharacter('male')"
       >
         <span class="character-float">
-          <img class="character-image" :src="characters.male.image" alt="男性角色阿依木" draggable="false" />
+          <img class="character-image" :src="characters.male.image" alt="男性角色艾德" draggable="false" />
         </span>
       </button>
       <div class="character-copy">
@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
         class="character-hitbox"
         :class="{ 'is-feedback': feedbackCharacter === 'female' }"
         type="button"
-        aria-label="选择女性角色阿依娜"
+        aria-label="选择女性角色阿依苏"
         :aria-pressed="selectedCharacter === 'female'"
         @mouseenter="hoveredCharacter = 'female'"
         @mouseleave="hoveredCharacter = null"
@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
         @click="chooseCharacter('female')"
       >
         <span class="character-float">
-          <img class="character-image female-image" :src="characters.female.image" alt="女性角色阿依娜" draggable="false" />
+          <img class="character-image female-image" :src="characters.female.image" alt="女性角色阿依苏" draggable="false" />
         </span>
       </button>
       <div class="character-copy">
