@@ -1,0 +1,53 @@
+/* The supplied artwork provides the frame; selection, previews and details stay live. */
+#albumView {font-family:'STKaiti','KaiTi','SimSun',serif}
+#albumView .album-name-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#albumName{font-size:30px;color:#7c2018;margin:10px 0}
+.album-palette{display:flex;justify-content:space-evenly;gap:10px;padding:12px;border:3px double #cdb78a}
+.album-palette i{display:block;width:34px;height:34px;border-radius:50%;border:1px solid #947d58;box-shadow:inset 0 2px 3px #fff8}
+.album-count{text-align:center;padding:12px;font-weight:bold;color:#674227}
+.album-steps ol{padding-left:25px}.album-steps li{padding:10px 0}.album-steps span{display:block;font-size:12px;margin-top:6px}
+#albumView #albumConfirm{width:100%;margin-top:14px;background:linear-gradient(#b32919,#86140f);border:4px double #e6b765;color:#fff0d2;font:700 22px 'KaiTi',serif}
+#albumView #albumConfirm:disabled{filter:grayscale(1);cursor:not-allowed}
+#albumView .album-card.selected:after{content:'✓';position:absolute;right:3px;top:3px;border-radius:50%;background:#17676d;color:#fff;border:2px solid #fff4cc;width:24px;height:24px;line-height:24px}
+@media(min-width:901px){
+ #patternWorkshop:has(#albumView:not([hidden])){padding:0;background:#241b17;backdrop-filter:none}
+ .workshop-shell:has(#albumView:not([hidden])){position:relative;container-type:inline-size;width:min(100vw,calc(100dvh * 1672 / 941));aspect-ratio:1672 / 941;max-height:none;padding:0;border:0;border-radius:0;overflow:hidden;box-shadow:none;background:url('../assets/ui/workshop/album-workshop.jpg') center/100% 100% no-repeat}
+ .workshop-shell:has(#albumView:not([hidden])) .workshop-head{position:absolute;inset:0;padding:0;border:0;pointer-events:none}
+ .workshop-shell:has(#albumView:not([hidden])) .workshop-head>div,
+ #albumView h3,#albumView .album-library>p,#albumView .album-steps,#albumView .album-footer{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0;padding:0}
+ .workshop-shell:has(#albumView:not([hidden])) .workshop-close{position:absolute;left:86.4%;top:4.4%;width:3.6%;height:5.7%;opacity:0;pointer-events:auto}
+ .workshop-shell:has(#albumView:not([hidden])) .workshop-close:focus-visible{opacity:1}
+ #albumView .album-wrap{display:block;margin:0}
+ #albumView .workshop-pane{position:static;padding:0;border:0;background:none}
+ #albumGrid{position:absolute;left:10.2%;top:26%;width:18.3%;height:56.1%;max-height:none;overflow:auto;padding:0 1.3cqw 0 .2cqw;scrollbar-width:thin;scrollbar-color:#7e7769 #fffae9}
+ #albumView .album-group h4{margin:.55cqw 0 .6cqw;font-size:1.19cqw;letter-spacing:.08em;color:#75432a;border-bottom:1px solid #c5a065;padding-bottom:.3cqw}
+ #albumView .album-group:first-child h4{margin-top:0}
+ #albumView .album-row{gap:.5cqw}
+ #albumView .album-card{border:3px double #ba985f;border-radius:3px;background:#fff5d9;padding:0;overflow:hidden}
+ #albumView .album-card.selected{border-color:#19676a;box-shadow:0 0 0 2px #d5bd83}
+ #albumView .album-group:first-child .album-row{grid-template-columns:repeat(3,1fr)}
+ #albumView .album-group:first-child .album-card{grid-column:span 1;width:126%;margin-bottom:.4cqw}
+ #albumView .album-card small{font-size:.78cqw;padding:.28cqw 0;white-space:nowrap;color:#3f3524}
+ #albumView .album-card.locked img{filter:grayscale(1) sepia(.4);opacity:.55}
+ #albumView .album-lock{font-size:.85cqw;right:2px;top:2px;background:#766047aa;padding:0 2px}
+ #albumView .album-card.selected:after{width:1.55cqw;height:1.55cqw;font-size:1.2cqw;line-height:1.45cqw}
+ #albumCount{position:absolute;left:13.1%;top:84.2%;width:14%;padding:0;font-size:1.15cqw;letter-spacing:.08em}
+ #albumPreview{position:absolute;left:31.28%;top:22.3%;width:37.32%;height:35.7%;border:0;border-radius:0;background-size:cover;background-position:center}
+ #albumBlank{position:absolute;left:31.58%;top:65.67%;width:36.84%;height:23.38%;border:0;border-radius:0;object-fit:cover}
+ #albumView .album-name-row{position:absolute;left:72.55%;top:23%;width:17.1%;height:6%;border-bottom:2px solid #ba9150}
+ #albumName{font-size:2.28cqw;letter-spacing:.07em;margin:0;white-space:nowrap}
+ #albumNumber{font-size:1.08cqw;color:#5c2b21}
+ #albumView #albumMeaning{position:absolute;left:72.55%;top:30.9%;width:17%;min-height:0;margin:0;font-size:1.14cqw;color:#433b25;line-height:1.5}
+ #albumPalette{position:absolute;left:72.55%;top:35.1%;width:17.2%;height:6.65%;padding:.65cqw 1.4cqw;align-items:center;border-radius:8px;background:#fff4d766}
+ #albumPalette i{width:2.4cqw;height:2.4cqw}
+ #albumView #albumConfirm{position:absolute;left:74%;top:76.3%;width:14.2%;height:5.1%;margin:0;padding:0;font-size:1.62cqw;border-radius:9px;box-shadow:0 0 0 2px #96281a}
+}
+@media(max-width:900px){
+ #albumView .album-wrap{grid-template-columns:1fr;margin-top:12px}
+ #albumView .workshop-pane{background:#fff1d4;border:4px double #af8346}
+ #albumView h3{color:#fff0d2;background:#195b64;padding:9px;border:3px double #d5b26c}
+ #albumView .album-grid{max-height:280px}
+ #albumView #albumBlank{height:auto}
+ #albumView #albumPreview{height:300px}
+ #albumView .album-side p{min-height:0}
+}

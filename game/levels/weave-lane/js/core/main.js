@@ -141,5 +141,7 @@ if(resumed){
  ['idle','walkDown','walkUp','walkLeft','walkRight'].forEach(framesFor);
  setStatus('已接续上次的织梦巷旅程。');
  if(state.woven&&!state.silkCollected)openCompare();
+}else if(Campaign.snapshot().characterChosen){
+ chooseCharacter(pendingCharacter);
 }else{state.busy=true;selectChoice(pendingCharacter);$('characterSetup').hidden=false;}
 requestAnimationFrame(frame);

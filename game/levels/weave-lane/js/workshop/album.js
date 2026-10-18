@@ -11,19 +11,24 @@ function renderAlbum(){
  BLUEPRINTS.forEach(bp=>{(groups[bp.group]=groups[bp.group]||[]).push(bp)});
  $('albumGrid').innerHTML=Object.keys(groups).map(g=>
   '<div class="album-group"><h4>'+g+'</h4><div class="album-row">'+groups[g].map(bp=>
-   '<button type="button" data-album="'+bp.id+'" class="album-card'+(bp.id===albumSelected?' selected':'')+(bp.locked?' locked':'')+'">'+
-   '<img src="'+bp.thumb+'" alt="'+bp.name+'">'+(bp.locked?'<span class="album-lock">后续章节</span>':'')+
+   '<button type="button" data-album="'+bp.id+'" aria-pressed="'+(bp.id===albumSelected)+'" aria-label="'+bp.name+(bp.locked?'（未解锁）':'')+'" class="album-card'+(bp.id===albumSelected?' selected':'')+(bp.locked?' locked':'')+'">'+
+   '<img src="'+bp.thumb+'" alt="">'+(bp.locked?'<span class="album-lock" aria-hidden="true">🔒</span>':'')+
    '<small>'+bp.num+' '+bp.name+'</small></button>').join('')+'</div></div>').join('');
+ $('albumCount').textContent='已收集 '+BLUEPRINTS.filter(bp=>!bp.locked).length+' / '+BLUEPRINTS.length;
  showAlbumDetail(albumSelected);
 }
 function showAlbumDetail(id){
  const bp=blueprintById(id);
- $('albumPreview').style.backgroundImage='url("'+bp.thumb+'")';
- $('albumName').textContent=bp.num+' '+bp.name;
+ $('albumPreview').style.backgroundImage='url("'+bp.big+'")';
+ $('albumPreview').setAttribute('aria-label',bp.name+' · 纹样原貌');
+ $('albumName').textContent=bp.name;
+ $('albumNumber').textContent='NO.'+bp.num;
+ $('albumPalette').innerHTML=[bp.palette.turquoise,bp.palette.main,'#17467d',bp.palette.base].map(color=>'<i style="background:'+color+'" title="'+color+'"></i>').join('');
  $('albumMeaning').textContent=bp.meaning;
  const plan=state.patternPlan&&state.patternPlan.blueprint===bp.id;
  $('albumConfirm').disabled=bp.locked;
  $('albumConfirm').textContent=plan?'重新用这张':(bp.locked?'待解锁':'就用这张');
+ $('albumBlank').hidden=bp.locked;
  if(!bp.locked){
   const cv=$('albumBlank');
   const saved=state.patternPlan;

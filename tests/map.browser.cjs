@@ -46,13 +46,14 @@ async function enterChapter(page, region, chapter) {
 
       let { host, child } = await enterChapter(page, 2, 'levels/weave-lane/');
       assert.equal(await host.evaluate(() => Campaign.snapshot().character), hero);
-      if (await child.locator('#characterSetup').isVisible()) await child.locator('#startJourney').click();
+      assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Map selection must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await child.evaluate(() => { state.quest = true; LevelOneProgress.save(); });
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('twc_l1_save')).state.quest), true);
       ({ child } = await enterChapter(page, 2, 'levels/weave-lane/'));
       assert.equal(await child.evaluate(() => state.quest), true);
+      assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Reopening must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
 

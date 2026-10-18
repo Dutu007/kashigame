@@ -1,0 +1,32 @@
+/* Transparent reference frame around the live dye animation. */
+#dyePerform{padding:0;background:#171315d9}
+#dyePerform .perform-card{
+ position:relative;container-type:inline-size;
+ width:min(100vw,100dvh);aspect-ratio:1;
+ padding:0;border:0;border-radius:0;box-shadow:none;
+ background:url('../assets/ui/workshop/dye-perform-frame.png') center/contain no-repeat;
+ filter:drop-shadow(0 16px 22px #0008);
+}
+#dyePerform #performCanvas{
+ position:absolute;left:28%;top:25%;width:44%;height:44%;
+ border:2px solid #b38543;border-radius:7px;
+ box-shadow:0 2px 9px #5f361f44;background:#f3e6c8;
+}
+#dyePerform #performText{
+ position:absolute;left:23%;top:70%;width:54%;margin:0;
+ color:#60391e;font:700 1.9cqw/1.5 'STKaiti','KaiTi','SimSun',serif;
+ text-shadow:0 1px #fff3d4;
+}
+#dyePerform #performSkip{
+ position:absolute;left:43%;top:75%;width:14%;height:4.8%;
+ padding:0;border:3px double #d9ad59;border-radius:7px;
+ background:linear-gradient(#247e83,#10515b);color:#fff0c7;
+ font:700 1.9cqw 'STKaiti','KaiTi','SimSun',serif;
+ box-shadow:0 2px 4px #59371855,inset 0 0 0 1px #073d46;
+}
+#dyePerform #performSkip:hover{background:linear-gradient(#329a9d,#17656d)}
+#dyePerform #performSkip:focus-visible{outline:3px solid #fff0b2;outline-offset:3px}
+@media(max-width:600px){
+ #dyePerform #performText{font-size:2.5cqw;left:22%;width:56%;top:69.5%}
+ #dyePerform #performSkip{left:40%;width:20%;height:6%;top:76%;font-size:3cqw}
+}
