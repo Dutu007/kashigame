@@ -11,9 +11,11 @@
   <link rel="stylesheet" href="css/workshop.css?v=merged2">
   <link rel="stylesheet" href="css/workshop-skin.css?v=3">
   <link rel="stylesheet" href="css/thread-reference.css?v=3">
+  <link rel="stylesheet" href="css/album-reference.css?v=1">
+  <link rel="stylesheet" href="css/dye-perform.css?v=1">
 </head>
 <body>
-<section id="characterSetup" aria-label="选择主角">
+<section id="characterSetup" hidden aria-label="选择主角">
   <div class="setup-card">
     <div class="setup-kicker">时间织城 · 第一章 织梦巷</div>
     <h2>选择你的主角</h2>
@@ -30,9 +32,9 @@
     <div class="workshop-head"><div><div id="workshopKicker" class="workshop-kicker">老织坊 · 纹样工作台</div><h2 id="workshopTitle">纹样册</h2></div><button id="workshopClose" class="workshop-close" type="button" title="退出工作台">×</button></div>
     <div id="albumView" hidden>
       <div class="album-wrap">
-        <div class="workshop-pane"><h3>拓样集</h3><p>阿木提拓下来的纹样，先挑一张合眼缘的。</p><div id="albumGrid" class="album-grid"></div></div>
-        <div class="workshop-pane"><div id="albumPreview"></div><h3 style="margin-top:10px">白坯预览</h3><canvas id="albumBlank" width="360" height="360"></canvas></div>
-        <aside class="workshop-pane album-side"><h3>这一张</h3><p id="albumName" style="font-weight:700"></p><p id="albumMeaning"></p><p>选定后：辨纹认识结构 → 扎束定留白 → 染院配色。</p><button id="albumConfirm" class="workshop-action" type="button">就用这张</button></aside>
+        <div class="workshop-pane album-library"><h3>拓样集</h3><p>挑一张合眼缘的纹样。</p><div id="albumGrid" class="album-grid"></div><div id="albumCount" class="album-count"></div></div>
+        <div class="workshop-pane album-art"><h3>纹样原貌</h3><div id="albumPreview" role="img" aria-label="纹样原貌"></div><h3>白坯预览</h3><canvas id="albumBlank" width="720" height="260" aria-label="白坯预览"></canvas></div>
+        <aside class="workshop-pane album-side"><h3>纹样详情</h3><div class="album-name-row"><h4 id="albumName"></h4><span id="albumNumber"></span></div><p id="albumMeaning"></p><div id="albumPalette" class="album-palette" aria-label="纹样配色"></div><div class="album-steps"><h3>织造步骤</h3><ol><li><strong>01 辨纹 · 认识结构</strong><span>观察纹样，理解花草的组合规律。</span></li><li><strong>02 扎线 · 束定留白</strong><span>按纹样轮廓扎线，留出需要的白色。</span></li><li><strong>03 染院 · 调配色彩</strong><span>选择合适的颜色，进行染色。</span></li></ol></div><button id="albumConfirm" class="workshop-action" type="button">就用这张</button><p class="album-footer">选好纹样，开始你的织造之旅。</p></aside>
       </div>
     </div>
     <div id="threadingView">
