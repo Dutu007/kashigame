@@ -12,16 +12,17 @@ const game = new Phaser.Game({
 Campaign.enter('karez');
 if (G.state.chapterComplete) Campaign.complete('karez');
 ChapterBridge.register({
+  prepareRestart() { SaveService.suspended = true; },
   save() {
     // Flush live workshop models before the host removes this chapter's iframe.
     const workshop = game.scene.getScene('UI')?.workshop;
     if (workshop?.opened) {
       workshop.ladderGame?.save();
       workshop.lampGame?.save();
-      if (workshop.kind === 'patch') workshop.savePatchProgress();
     }
+    game.scene.getScene('Tunnel')?.patchRepair?.save();
     SaveService.save();
   },
-  pause() { game.input.enabled = false; game.loop.sleep(); },
-  resume() { game.input.enabled = true; game.loop.wake(); },
+  pause() { KarezTransitions.pause('host'); game.input.enabled = false; game.loop.sleep(); },
+  resume() { game.input.enabled = true; game.loop.wake(); KarezTransitions.resume('host'); },
 });

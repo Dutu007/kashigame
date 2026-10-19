@@ -1,0 +1,81 @@
+.karez-transition[hidden] { display: none; }
+.karez-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0d0906;
+  color: #fff1d4;
+  font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+.karez-transition[data-phase='closing'] { opacity: 0; }
+.karez-transition__frame {
+  width: min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  isolation: isolate;
+}
+.karez-transition__art, .karez-transition__cast, .karez-transition__shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.karez-transition__art { object-fit: cover; opacity: 0; }
+.karez-transition__cast { opacity: 0; }
+.karez-transition[data-phase='playing'] .karez-transition__art,
+.karez-transition[data-phase='playing'] .karez-transition__cast,
+.karez-transition[data-phase='closing'] .karez-transition__art,
+.karez-transition[data-phase='closing'] .karez-transition__cast { opacity: 1; transition: opacity 240ms ease; }
+.karez-transition[data-phase='playing'][data-repeat='false'] .karez-transition__art {
+  animation: karez-interlude-drift 4s ease-out both;
+}
+.karez-transition[data-paused='true'] .karez-transition__art { animation-play-state: paused !important; }
+.karez-transition[data-card='arrival'] .karez-transition__art,
+.karez-transition[data-card='maintenance-record'] .karez-transition__art { animation: none !important; }
+.karez-transition__shade { background: linear-gradient(transparent 58%, #100b0770 78%, #100b07ed); }
+.karez-transition__caption {
+  position: absolute;
+  left: 6%;
+  right: 14%;
+  bottom: 5%;
+  text-shadow: 0 2px 8px #0d0906;
+}
+.karez-transition__chapter { color: #e5cba0; font-size: clamp(12px, 1.1cqw, 21px); letter-spacing: .2em; }
+.karez-transition h2 { margin: .3em 0; font-size: clamp(24px, 2.5cqw, 48px); font-weight: 500; letter-spacing: .14em; }
+.karez-transition p { margin: 0; font-size: clamp(13px, 1.3cqw, 25px); line-height: 1.7; }
+.karez-transition__skip {
+  position: absolute;
+  right: 3%;
+  top: 4%;
+  padding: .65em 1em;
+  border: 1px solid #dec39488;
+  border-radius: 4px;
+  background: #21180dbb;
+  color: #fff1d4;
+  font: inherit;
+  font-size: clamp(12px, 1cqw, 19px);
+  cursor: pointer;
+}
+.karez-transition__skip:hover, .karez-transition__skip:focus-visible { background: #513b22ee; outline: 2px solid #e4c58e; outline-offset: 3px; }
+.karez-transition__actor { position: absolute; width: auto; object-fit: contain; filter: drop-shadow(0 5px 4px #24150c44); }
+.arrival-hero { left: 65%; bottom: 18%; height: 34%; }
+.arrival-keeper { left: 20%; bottom: 43%; height: 27%; }
+/* Feet and lower bodies stay behind the existing table; the ledger remains visible. */
+.karez-transition[data-card='maintenance-record'] .karez-transition__cast {
+  clip-path: polygon(0 0, 100% 0, 100% 65%, 60% 63%, 55% 61.7%, 0 60%);
+}
+.record-aide { left: 23%; bottom: 20%; height: 53%; }
+.record-keeper { left: 39%; bottom: 13%; height: 58%; }
+.record-aysu { left: 51%; bottom: 20%; height: 53%; }
+@keyframes karez-interlude-drift { from { transform: scale(1); } to { transform: scale(1.025); } }
+@media (prefers-reduced-motion: reduce) {
+  .karez-transition, .karez-transition * { animation: none !important; transition: none !important; }
+}

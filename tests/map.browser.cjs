@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
+const karezStateAt = require('../game/tests/karez-fixture.cjs');
 const base = process.env.GAME_URL || 'http://localhost:4173/';
 const output = path.resolve(__dirname, '../output');
 fs.mkdirSync(output, { recursive: true });
@@ -16,6 +17,21 @@ async function enterChapter(page, region, chapter) {
   assert.ok(child, `Missing chapter frame: ${chapter}`);
   await child.waitForLoadState('load');
   return { host: hostFrame, child };
+}
+
+// Report to the keeper from the last checkpoint and let the chapter close itself.
+async function finishKarez(child, page) {
+  await child.evaluate(state => {
+    G.state = state;
+    game.scene.getScene('Surface').player.x = SURF.npcX + 80;
+    game.scene.getScene('Surface').talkKeeper();
+  }, karezStateAt(8));
+  await child.waitForFunction(() => G.ui.dialogue.isOpen);
+  for (let i = 0; i < 12 && await child.evaluate(() => G.ui.dialogue.isOpen); i++) {
+    await child.evaluate(() => G.ui.dialogue.advance());
+    await page.waitForTimeout(80);
+  }
+  await page.locator('.game-overlay').waitFor({ state: 'detached', timeout: 30000 });
 }
 
 (async () => {
@@ -58,14 +74,30 @@ async function enterChapter(page, region, chapter) {
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
 
       ({ host, child } = await enterChapter(page, 6, 'karez.html'));
-      await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player);
+      await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player
+        && typeof G !== 'undefined' && G.ui && !KarezTransitions.active, null, { timeout: 30000 });
       assert.equal(await host.evaluate(() => Campaign.snapshot().character), hero);
       assert.equal(await child.evaluate(() => game.scene.getScene('Surface').player.heroId), hero);
-      await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
+
+      // The keeper's final report closes the chapter and hands the map level list back.
+      await finishKarez(child, page);
+      assert.equal(await page.locator('.map-page').isVisible(), true);
+      assert.equal(await page.locator('.game-overlay').count(), 0);
+      await page.locator('.map-notice').waitFor({ state: 'visible', timeout: 5000 });
+      assert.match(await page.locator('.map-notice').innerText(), /坎儿井 · 完成/);
       assert.ok(await page.evaluate(() => localStorage.getItem('twc_l2_save')));
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('twc_campaign_v1')).completed.karez), true);
+      if (hero === 'aide') await page.screenshot({ path: path.join(output, 'map-karez-complete.png') });
+      await page.locator('.map-notice').waitFor({ state: 'detached', timeout: 8000 });
+
+      // Re-entering from the map still works and starts a fresh run.
+      ({ child } = await enterChapter(page, 6, 'karez.html'));
+      await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player);
+      assert.equal(await child.evaluate(() => G.state.recordSaved), false);
+      await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
       assert.deepEqual(errors, [], `JavaScript errors for ${selection}`);
       assert.deepEqual(missing, [], `Missing production assets for ${selection}`);
-      console.log(`PASS ${selection}: production home, selection, preview, both map chapters, shared hero, save and reopen`);
+      console.log(`PASS ${selection}: production home, selection, preview, both map chapters, shared hero, keeper report returns to the map, save and reopen`);
       await context.close();
     }
   } catch (error) {

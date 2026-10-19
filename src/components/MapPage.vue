@@ -24,15 +24,23 @@ const gameChapters = { 3: { id: 'weave', title: '织梦巷' }, 7: { id: 'karez',
 const selectedLevel = ref(null)
 const closeButton = ref(null)
 const imageFailed = ref(false)
+const completedNotice = ref('')
 const selectedCharacter = ref(sessionStorage.getItem('selectedCharacter') || 'female')
 const levelsWithRegions = computed(() => mapLevels.map((level, index) => ({ ...level, points: regions[index], image: images[`../../地图关卡${level.id}.png`] })))
 let opener = null
+let noticeTimer = null
 
 function closeGame() {
   gameFrame.value?.contentWindow?.GameApp?.save()
   isGameLoading.value = false
   activeGame.value = null
   nextTick(() => opener?.focus())
+}
+function announceCompletion(chapter) {
+  if (!['weave', 'karez'].includes(chapter)) return
+  completedNotice.value = chapter === 'weave' ? '织梦巷 · 完成 · 纹脉已接续' : '坎儿井 · 完成 · 水脉已连通'
+  clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => { completedNotice.value = '' }, 4200)
 }
 function selectLevel(level, event) {
   if (isGameLoading.value) return
@@ -50,7 +58,13 @@ function selectLevel(level, event) {
   nextTick(() => closeButton.value?.focus())
 }
 function handleGameMessage(event) {
-  if (event.origin === window.location.origin && event.source === gameFrame.value?.contentWindow && event.data?.type === 'map-chapter-ready') gameReady.value = true
+  if (event.origin !== window.location.origin || event.source !== gameFrame.value?.contentWindow) return
+  if (event.data?.type === 'map-chapter-ready') gameReady.value = true
+  else if (event.data?.type === 'map-chapter-complete' && event.data.chapter === activeGame.value?.id) {
+    // Chapter two hands the player straight back to this level list once it is finished.
+    closeGame()
+    announceCompletion(event.data.chapter)
+  }
 }
 function finishGameLoading() {
   isGameLoading.value = false
@@ -64,6 +78,7 @@ onMounted(() => {
   window.addEventListener('message', handleGameMessage)
 })
 onBeforeUnmount(() => {
+  clearTimeout(noticeTimer)
   document.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('message', handleGameMessage)
 })
@@ -86,6 +101,9 @@ onBeforeUnmount(() => {
       <iframe ref="gameFrame" :src="activeGame.url" :title="activeGame.title" allow="autoplay; fullscreen" />
     </section>
     <GameLoading v-if="isGameLoading" class="chapter-loading" :destination="activeGame.title" :ready="gameReady" @complete="finishGameLoading" />
+    <Transition name="map-notice">
+      <p v-if="completedNotice" class="map-notice" role="status">{{ completedNotice }}</p>
+    </Transition>
     <Transition name="preview">
       <div v-if="selectedLevel" class="preview-backdrop" @click.self="closePreview"><section class="level-preview" role="dialog" aria-modal="true" aria-labelledby="preview-title"><header class="preview-header"><div><p>喀什小镇 · 第 {{ String(selectedLevel.id).padStart(2, '0') }} 关</p><h2 id="preview-title">{{ selectedLevel.title }}</h2></div><button ref="closeButton" type="button" class="preview-close" aria-label="关闭关卡预览" @click="closePreview">×</button></header><div class="preview-art"><p v-if="imageFailed">关卡图片暂时加载失败，请关闭后重试。</p><img v-else :src="selectedLevel.image" :alt="`${selectedLevel.title}关卡地图`" @error="imageFailed = true" /></div><p class="preview-caption">{{ selectedLevel.detail }}</p></section></div>
     </Transition>
@@ -94,6 +112,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .chapter-loading { position: fixed; inset: 0; z-index: 50; }
+.map-notice { position: fixed; left: 50%; bottom: 30px; z-index: 45; margin: 0; padding: 10px 24px; border: 1px solid #e0bd85; border-radius: 999px; color: #fbeccd; background: #342519e6; box-shadow: 0 12px 30px #2a1a0f66; font: 15px/1.5 'Songti SC', serif; letter-spacing: .06em; transform: translateX(-50%); }
+.map-notice-enter-active, .map-notice-leave-active { transition: opacity 260ms ease; }
+.map-notice-enter-from, .map-notice-leave-to { opacity: 0; }
 .game-overlay { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #21170f; }
 .game-header { display: flex; align-items: center; gap: 20px; padding: 8px 16px; color: #f9e5bc; background: #342519; }
 .game-header h1 { margin: 0; font: 700 18px/1.4 serif; }
@@ -122,5 +143,5 @@ onBeforeUnmount(() => {
 .preview-enter-active .level-preview, .preview-leave-active .level-preview { transition: transform 200ms ease; }
 .preview-enter-from, .preview-leave-to { opacity: 0; }
 .preview-enter-from .level-preview, .preview-leave-to .level-preview { transform: translateY(10px); }
-@media (prefers-reduced-motion: reduce) { .region-art, .preview-enter-active, .preview-leave-active, .preview-enter-active .level-preview, .preview-leave-active .level-preview { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .region-art, .preview-enter-active, .preview-leave-active, .preview-enter-active .level-preview, .preview-leave-active .level-preview, .map-notice-enter-active, .map-notice-leave-active { animation: none; transition: none; } }
 </style>

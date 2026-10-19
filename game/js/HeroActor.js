@@ -33,9 +33,9 @@ const HeroActor = (() => {
     sprite.heroPose = 'idle';
     return sprite;
   }
-  function update(sprite, direction, moving, onGround, speed = 220) {
+  function update(sprite, direction, moving, speed = 220) {
     if (direction) { sprite.facing = direction; sprite.heroPose = direction < 0 ? 'walkLeft' : 'walkRight'; }
-    if (moving && onGround) {
+    if (moving) {
       sprite.anims.timeScale = Math.abs(speed) / 220;
       sprite.play(animation(sprite.heroId, sprite.heroPose), true);
     } else {

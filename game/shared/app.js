@@ -16,11 +16,13 @@
     const name = GameCharacters.definitions[s.character].name;
     $('journeyStatus').textContent = s.completed.karez && s.completed.weave ? `两段故事已完成 · ${name}的旅程` : s.characterChosen ? `同行主角 · ${name}` : '从织梦巷开始你的旅程';
     $('continueJourney').hidden = !s.started.weave && !s.started.karez;
+    $('continueJourney').innerHTML = s.currentChapter === 'karez'
+      ? '进入坎儿井 <span aria-hidden="true">→</span>' : '继续旅程 <span aria-hidden="true">→</span>';
     $('enterWeave').textContent = s.started.weave ? '重返织梦巷 →' : '走进织梦巷 →';
     $('weaveStatus').textContent = s.completed.weave ? '已完成 · 获得织梦染谱' : s.started.weave ? '探索中 · 进度已保留' : '旅程起点';
     $('enterKarez').disabled = !canEnter('karez');
-    $('enterKarez').textContent = canEnter('karez') ? (s.started.karez ? '重返坎儿井 →' : '前往坎儿井 →') : '完成第一关后开启';
-    $('karezStatus').textContent = s.completed.karez ? '已完成 · 水路重新连通' : s.started.karez ? '探索中 · 进度已保留' : '承接织梦巷的故事';
+    $('enterKarez').textContent = canEnter('karez') ? '进入坎儿井 →' : '完成第一关后开启';
+    $('karezStatus').textContent = s.completed.karez ? '已完成 · 再次进入从头开始' : s.started.karez ? '再次进入将从头开始' : '承接织梦巷的故事';
     $('heroName').textContent = name;
     $('nextChapter').hidden = current !== 'weave' || !s.completed.weave;
     $('storageWarning').hidden = Campaign.storageOK;
@@ -28,12 +30,15 @@
   function unload() {
     if (!frame) return;
     bridge()?.save();
+    if (current === 'karez') bridge()?.prepareRestart?.();
     frame.remove(); frame = null;
   }
-  function enter(id) {
+  function enter(id, fresh = false) {
     if (!chapters[id] || !canEnter(id)) return;
     if ($('completion').open) $('completion').close();
-    unload(); current = id; Campaign.enter(id);
+    unload();
+    if (id === 'karez' && fresh) Campaign.resetChapter(id);
+    current = id; Campaign.enter(id);
     $('menu').hidden = true; $('play').hidden = false; $('loading').hidden = false;
     $('chapterTitle').textContent = chapters[id].title;
     frame = document.createElement('iframe'); frame.title = chapters[id].title; frame.allow = 'autoplay; fullscreen';
@@ -53,6 +58,20 @@
     history.replaceState(null, '', location.pathname);
     refresh(); $('continueJourney').focus();
   }
+  // Chapter two is the end of the journey: leave the chapter and show the level list again
+  // instead of keeping the player inside the embedded game.
+  function returnToLevelList(chapter) {
+    if (!fromMap) { menu(); return; }
+    try { window.parent.postMessage({ type: 'map-chapter-complete', chapter }, location.origin); }
+    catch (_) { /* Fall through to the local level list. */ }
+    // The map closes this player as soon as it receives the message. If it never answers
+    // (for example ?entry=map was opened on its own), fall back to the local level list.
+    setTimeout(() => { if (current === chapter) menu(); }, 600);
+  }
+  function finishChapter(chapter) {
+    if (chapter === 'karez') returnToLevelList(chapter);
+    else showCompletion(chapter);
+  }
   function showCompletion(id) {
     if (!chapters[id] || !Campaign.snapshot().completed[id]) return;
     completedChapter = id; bridge()?.pause();
@@ -67,16 +86,21 @@
   }
   function resume() { bridge()?.resume(); frame?.contentWindow.focus(); }
   $('enterWeave').onclick = () => enter('weave');
-  $('enterKarez').onclick = () => enter('karez');
-  $('continueJourney').onclick = () => enter(Campaign.snapshot().currentChapter);
+  $('enterKarez').onclick = () => enter('karez', true);
+  $('continueJourney').onclick = () => { const id = Campaign.snapshot().currentChapter; enter(id, id === 'karez'); };
   $('backToMenu').onclick = menu;
-  $('nextChapter').onclick = () => enter('karez');
+  $('nextChapter').onclick = () => enter('karez', true);
   $('stayInChapter').onclick = () => { $('completion').close(); resume(); };
-  $('completionNext').onclick = () => completedChapter === 'weave' ? enter('karez') : menu();
+  $('completionNext').onclick = () => completedChapter === 'weave' ? enter('karez', true) : menu();
   $('completion').addEventListener('cancel', resume);
-  window.GameApp = Object.freeze({ showCompletion, resume, save: () => bridge()?.save() }); Campaign.subscribe(refresh);
-  window.addEventListener('beforeunload', () => bridge()?.save()); refresh();
+  window.GameApp = Object.freeze({ showCompletion, finishChapter, resume, save: () => bridge()?.save() }); Campaign.subscribe(refresh);
+  window.addEventListener('beforeunload', () => bridge()?.save());
+  window.addEventListener('pagehide', event => {
+    bridge()?.save();
+    if (!event.persisted && current === 'karez') bridge()?.prepareRestart?.();
+  });
+  refresh();
   const requested = query.get('chapter') || location.hash.slice(1);
-  if (chapters[requested]) enter(requested);
+  if (chapters[requested]) enter(requested, fromMap && requested === 'karez');
   else if (['weave','karez'].includes(query.get('completed'))) showCompletion(query.get('completed'));
 })();
