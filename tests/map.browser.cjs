@@ -9,9 +9,23 @@ fs.mkdirSync(output, { recursive: true });
 
 async function enterChapter(page, region, chapter) {
   await page.locator('.region-hit').nth(region).click();
+  if (chapter === 'levels/weave-lane/') {
+    await page.frameLocator('.chapter-loading iframe').locator('#knot').waitFor();
+  } else {
+    await page.locator('.chapter-loading [role="progressbar"]').waitFor();
+  }
   await page.locator('.chapter-loading').waitFor({ state: 'hidden', timeout: 30000 });
   const hostFrame = await page.locator('.game-overlay iframe').elementHandle().then(element => element.contentFrame());
   await hostFrame.waitForLoadState('load');
+  if (chapter === 'levels/weave-lane/') {
+    const intro = page.frames().find(frame => frame.url().includes('/intro/'));
+    assert.ok(intro, 'Weave chapter must begin with the supplied transition');
+    await intro.locator('#stage.play').waitFor();
+    await page.waitForFunction(() => {
+      const host = document.querySelector('.game-overlay iframe')?.contentDocument;
+      return host?.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('#board');
+    }, { timeout: 20000 });
+  }
   const child = page.frames().find(frame => frame.url().includes(chapter));
   assert.ok(child, `Missing chapter frame: ${chapter}`);
   await child.waitForLoadState('load');

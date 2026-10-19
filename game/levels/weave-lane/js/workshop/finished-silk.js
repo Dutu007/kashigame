@@ -79,13 +79,15 @@ function silkDiamond(ctx,x,y,rx,ry,color){
  ctx.lineTo(x,y+ry);ctx.lineTo(x-rx,y);ctx.closePath();ctx.fill();
 }
 
-function renderFinishedHanging(target,colors,tplId){
+function renderFinishedHanging(target,colors,tplId,{transparent=false,clothOnly=false}={}){
  const tpl=regionTemplate(tplId),silk=finishedCloth(colors,tpl),pal=finishedPalette(colors,tpl);
  target.width=640;target.height=880;
  const c=target.getContext('2d');c.clearRect(0,0,640,880);
+ if(!transparent){
  const bg=c.createRadialGradient(240,330,30,320,430,610);
  bg.addColorStop(0,'#fff8e8');bg.addColorStop(.6,'#f3e4c7');bg.addColorStop(1,'#d4b588');
  c.fillStyle=bg;c.fillRect(0,0,640,880);
+ }
  // 背景暖光与落地阴影。
  c.save();c.filter='blur(18px)';c.fillStyle='rgba(109,72,35,.13)';
  c.beginPath();c.ellipse(327,847,232,12,-.025,0,Math.PI*2);c.fill();c.restore();
@@ -103,6 +105,7 @@ function renderFinishedHanging(target,colors,tplId){
  c.save();c.shadowColor='rgba(74,46,20,.23)';c.shadowBlur=15;c.shadowOffsetX=7;c.shadowOffsetY=12;
  outline();c.fillStyle=CREAM_HEX;c.fill();c.restore();
  // 雕花挂杆与铜金端头。
+ if(!clothOnly){
  const rod=c.createLinearGradient(0,30,0,54);
  rod.addColorStop(0,'#503116');rod.addColorStop(.28,'#d4a662');rod.addColorStop(.47,'#8e592c');rod.addColorStop(.75,'#4a2c17');rod.addColorStop(1,'#9c6a33');
  c.fillStyle=rod;c.fillRect(39,34,562,18);
@@ -113,6 +116,7 @@ function renderFinishedHanging(target,colors,tplId){
   c.strokeStyle='#f6d491';c.lineWidth=.8;
   for(let i=-10;i<=10;i+=5){c.beginPath();c.ellipse(i,0,3,15,0,0,Math.PI*2);c.stroke();}
   c.restore();silkGold(c,x+(x<320?-19:19),43,5);
+ }
  }
  c.save();outline();c.clip();
  // 横纵网格映射：纹样随褶皱和弧形布边弯曲，不产生竖向切片空缝。
@@ -180,7 +184,7 @@ function renderFinishedHanging(target,colors,tplId){
   silkTassel(c,x,hemY(u)+1,tasselColors[ci],1.12);
  }
  // 挂杆两侧小垂饰。
- for(const x of [39,601]){
+ if(!clothOnly)for(const x of [39,601]){
   c.strokeStyle='#966a35';c.lineWidth=1.2;c.beginPath();c.moveTo(x,61);c.lineTo(x,88);c.stroke();
   silkGold(c,x,76,3);silkTassel(c,x,88,pal.main,1.15);
   silkTassel(c,x+(x<320?7:-7),136,pal.accent,.85);

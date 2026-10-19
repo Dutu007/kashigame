@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>时间织城 · 第一章 织梦巷</title>
   <link rel="stylesheet" href="css/base.css?v=merged2">
-  <link rel="stylesheet" href="css/world.css?v=delivery1">
+  <link rel="stylesheet" href="css/world.css?v=weave-smooth-20261020-2">
+  <link rel="stylesheet" href="css/walk-editor.css?v=1">
   <link rel="stylesheet" href="css/ambient.css?v=7">
   <link rel="stylesheet" href="css/dialogue.css?v=merged2">
   <link rel="stylesheet" href="css/workshop.css?v=merged2">
@@ -13,6 +14,7 @@
   <link rel="stylesheet" href="css/thread-reference.css?v=3">
   <link rel="stylesheet" href="css/album-reference.css?v=1">
   <link rel="stylesheet" href="css/dye-perform.css?v=1">
+  <link rel="stylesheet" href="css/finished-reference.css?v=1">
 </head>
 <body>
 <section id="characterSetup" hidden aria-label="选择主角">
@@ -44,7 +46,7 @@
         <aside class="workshop-pane"><h3>右侧 · 白坯预览</h3><p>每连完一轮，纹样就往白坯上多落一段。</p><div id="threadPreview" class="clue-card">当前轮：外轮廓<br><small>尚未连接</small></div><canvas id="blankPreview" width="220" height="220"></canvas><button id="hintBtn" class="workshop-action secondary" type="button">查看提示</button><button id="replayBtn" class="workshop-action secondary" type="button">再看一遍示范</button><button id="guideBtn" class="workshop-action secondary" type="button" hidden>这轮照着走</button><button id="threadUndo" class="workshop-action secondary" type="button">撤回一段</button></aside>
       </div>
     </div>
-    <div id="puzzleView" hidden class="workshop-pane puzzle-pane">
+    <div id="puzzleView" hidden class="workshop-pane puzzle-pane reference-puzzle">
       <h3>把白坯纹样拼回去</h3>
       <p>刚织好的无色纹样被竖直切成了 8 条等宽竖片，顺序已经打乱。照着上方的完整纹样，<b>按住竖片左右拖动</b>排回原来的顺序——竖片不会旋转、也不会翻面；当排列和原图完全一致时，纹样就会重新拼合。</p>
       <div class="puzzle-target"><canvas id="puzzleRef" width="160" height="160"></canvas><small>完整纹样 · 照着它拼</small></div>
@@ -111,15 +113,16 @@
 </section>
 <div id="freezeOverlay" aria-label="白坯纹样"><div class="freeze-card"><canvas id="freezeCanvas" width="480" height="480"></canvas><p>白坯纹样 · 已拼合</p></div></div>
 <section id="compareOverlay" hidden aria-label="成绸对比">
-  <div class="compare-card"><h3 style="margin:0 0 4px;color:#512b22">晾晒架上 —— 你的第一块绸</h3><p id="compareNote" style="margin:0"></p><div class="compare-row"><div><canvas id="silkOrigin" width="560" height="373"></canvas><small>蓝本 · 杏花卷草</small></div><div><canvas id="silkMine" width="560" height="373"></canvas><small>你的成绸</small></div></div><button id="silkCollect" class="workshop-action" type="button">收入我的纹样册</button></div>
+    <div class="compare-card"><h3 style="margin:0 0 4px;color:#512b22">晾晒架上 —— 你的第一块绸</h3><p id="compareNote" style="margin:0"></p><div class="compare-row"><div><canvas id="silkOrigin" width="560" height="373"></canvas><small id="silkOriginLabel">蓝本 · 杏花卷草</small></div><div><canvas id="silkMine" width="560" height="373"></canvas><small>你的成绸</small></div></div><button id="silkCollect" class="workshop-action" type="button">收入我的纹样册</button></div>
 </section>
 <main aria-label="织梦巷游戏画面">
-    <div class="board" id="board"><img id="background" alt="当前场景"><div id="avatar" aria-label="阿依苏"><canvas width="180" height="230"></canvas></div><div id="amuti"><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="amutiDye" hidden><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="foreground" aria-hidden="true"></div><div id="interactionHint" hidden></div><div class="function-bar" id="functionBar" aria-label="对话功能" hidden><button id="skipButton" type="button" title="跳过当前对话">»</button></div><div id="dialoguePanel" class="dialogue-panel" hidden><div id="dialoguePortrait" class="dialogue-portrait" aria-hidden="true"></div><div class="dialogue-copy"><div id="dialogueSpeaker" class="dialogue-speaker"></div><div id="dialogueText" class="dialogue-text"></div><div id="dialogueOptions" class="dialogue-options"></div><div class="dialogue-actions"><button id="dialogueNext" class="dialogue-next" type="button">继续 ▾</button></div></div></div><div id="toast" hidden></div><div id="wipe">沿着蓝色台阶走到上层</div></div>
+    <div class="board" id="board"><img id="background" alt="当前场景"><div id="avatar" aria-label="阿依苏"><canvas width="180" height="230"></canvas></div><div id="amuti"><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="amutiDye" hidden><img src="../../assets/characters/amuti/amuti_sprite.png" alt="阿木提"><span>阿木提</span></div><div id="foreground" aria-hidden="true"></div><div id="interactionHint" hidden></div><div class="function-bar" id="functionBar" aria-label="对话功能" hidden><button id="skipButton" type="button" title="跳过当前对话">»</button></div><div id="dialoguePanel" class="dialogue-panel" hidden><div id="dialoguePortrait" class="dialogue-portrait" aria-hidden="true"></div><div class="dialogue-copy"><div id="dialogueSpeaker" class="dialogue-speaker"></div><div id="dialogueText" class="dialogue-text"></div><div id="dialogueOptions" class="dialogue-options"></div><div class="dialogue-actions"><button id="dialogueNext" class="dialogue-next" type="button">继续 ▾</button></div></div></div><div id="toast" hidden></div><div id="memoryCurtain"></div></div>
 </main>
 
 <script src="../../shared/characters.js"></script>
   <script src="../../shared/campaign.js"></script>
   <script src="../../shared/chapter-bridge.js"></script>
+  <script src="../../shared/weave-transition.js?v=weave-smooth-20261020-2"></script>
   <script src="js/data/scenes.js"></script>
   <script src="js/data/characters.js?v=merged2"></script>
   <script src="js/data/amuti_dialogue.js?v=16"></script>
@@ -134,7 +137,8 @@
   <script src="js/core/sound.js"></script>
   <script src="js/core/dialogue.js?v=2"></script>
   <script src="js/core/sprite.js?v=delivery1"></script>
-  <script src="js/core/world.js?v=merged2"></script>
+  <script src="js/core/world.js?v=weave-smooth-20261020-2"></script>
+  <script src="js/core/walk-editor.js?v=1"></script>
   <script src="js/data/ambient-scenes.js?v=22"></script>
   <script src="js/core/ambient.js?v=22"></script>
   <script src="js/core/ambient-hook.js"></script>
@@ -148,7 +152,7 @@
   <script src="js/workshop/coloring.js?v=merged2"></script>
   <script src="js/workshop/weaving.js?v=merged2"></script>
   <script src="js/core/progress.js?v=2"></script>
-  <script src="js/core/main.js?v=merged2"></script>
+  <script src="js/core/main.js?v=weave-smooth-20261020-2"></script>
   <script src="js/core/guide.js"></script>
 </body>
 </html>

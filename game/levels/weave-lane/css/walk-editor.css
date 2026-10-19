@@ -1,0 +1,12 @@
+#walkEditorToggle{position:absolute;top:12px;left:12px;z-index:14;background:#163c40e8;border-color:#72e6cf;font-size:13px}
+#walkEditorPanel{position:absolute;top:55px;left:12px;z-index:14;max-width:calc(100% - 24px);padding:10px 12px;border:1px solid #72e6cf;border-radius:8px;background:#102b32ed;color:#e7fff7;font-size:13px;line-height:1.6}
+#walkEditorPanel p{margin:0 0 6px}#walkEditorPanel .walk-editor-actions{display:flex;gap:6px;flex-wrap:wrap}
+#walkEditorPanel button,#walkEditorPanel select{padding:5px 8px;background:#22474c;color:#e7fff7;border:1px solid #65a99e;border-radius:5px;font:inherit}
+#walkEditorStatus{display:block;margin-top:6px;max-width:440px}
+.board #walkEditorOverlay{z-index:12;pointer-events:none;touch-action:none;user-select:none;overflow:visible}
+#walkEditorOverlay .walk-area{fill:#56e9be18;stroke:#72ffda;stroke-width:2;vector-effect:non-scaling-stroke}
+#walkEditorOverlay .blocked-area{fill:#ff866c1c;stroke:#ff937e;stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke}
+#walkEditorOverlay .walk-edge{stroke:transparent;stroke-width:14;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:move}
+#walkEditorOverlay .walk-edge:hover{stroke:#fff7a9b3;stroke-width:5}
+#walkEditorOverlay .walk-vertex{fill:#163c40;stroke:#fff6ba;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:all;cursor:grab}
+#walkEditorOverlay .walk-vertex:hover{fill:#fff6ba}

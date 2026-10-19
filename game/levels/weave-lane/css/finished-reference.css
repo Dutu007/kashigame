@@ -1,0 +1,155 @@
+/* Reference artwork surrounds live canvases; gameplay controls remain real buttons. */
+#hangingOverlay { padding:0; background:#21170f; backdrop-filter:none; }
+#hangingOverlay .hanging-card {
+ position:relative;container-type:inline-size;
+ width:min(100vw,calc(100dvh * 1122 / 1402));aspect-ratio:1122 / 1402;
+ max-height:none;overflow:hidden;padding:0;border:0;border-radius:0;box-shadow:none;
+ background:url('../assets/ui/workshop/hanging-preview-reference.webp') center/100% 100% no-repeat;
+}
+#hangingOverlay .hanging-card>h3,
+#compareOverlay .compare-card>h3 {
+ position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+}
+#hangingOverlay #hangingCanvas {
+ position:absolute;left:19.7%;top:15%;width:60.6%;height:66.7%;
+ border:0;border-radius:0;background:transparent;
+}
+#hangingOverlay .hanging-actions { position:absolute;inset:0;margin:0;pointer-events:none; }
+#hangingOverlay .hanging-actions button {
+ position:absolute;top:82.8%;height:6.8%;width:23.2%;padding:0;
+ border:0;border-radius:24%;background:transparent;box-shadow:none;color:transparent;font-size:0;
+ pointer-events:auto;
+}
+#hangingBack { left:25.2%; }
+#hangingConfirm { left:51.5%; }
+#hangingOverlay .hanging-actions button:hover { background:#fff3cd25; }
+#hangingOverlay .hanging-actions button:focus-visible,
+#puzzleReshuffle:focus-visible,#silkCollect:focus-visible {
+ outline:3px solid #fff0b6;outline-offset:3px;
+}
+
+#freezeOverlay .freeze-card {
+ position:relative;container-type:inline-size;
+ width:min(78vw,calc(82dvh * 1122 / 1402),560px);aspect-ratio:1122 / 1402;
+ background:url('../assets/ui/workshop/blank-complete-frame.png') center/100% 100% no-repeat;
+ color:#684120;filter:drop-shadow(0 16px 26px #0007);
+}
+#freezeOverlay #freezeCanvas {
+ position:absolute;left:19%;top:23%;width:62%;height:auto;aspect-ratio:1;
+ border:1px solid #bc8b45;border-radius:4px;background:#f7edd8;
+ box-shadow:0 5px 12px #86552b33;
+}
+#freezeOverlay .freeze-card p {
+ position:absolute;left:15%;top:76%;width:70%;margin:0;
+ font:700 4.1cqw/1.5 'STKaiti','KaiTi','SimSun',serif;
+}
+
+@media(min-width:700px) {
+ #patternWorkshop:has(#puzzleView:not([hidden])) { padding:0;background:#2d2119;overflow:hidden; }
+ .workshop-shell:has(#puzzleView:not([hidden])) {
+  position:relative;container-type:inline-size;
+  width:min(100vw,calc(100dvh * 1448 / 1086));height:auto;aspect-ratio:1448 / 1086;
+  max-height:none;overflow:hidden;padding:0;border:0;border-radius:0;box-shadow:none;
+  background:url('../assets/ui/workshop/puzzle-reference.webp') center/100% 100% no-repeat;
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-head {
+  position:absolute;inset:0;min-height:0;padding:0;border:0;background:none;pointer-events:none;z-index:5;
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-head>div,
+ #puzzleView>h3,#puzzleView>p:not(#puzzleStatus),#puzzleView .puzzle-target small {
+  position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-close {
+  position:absolute;right:13.1%;top:6%;width:3%;height:4%;padding:0;pointer-events:auto;
+  border:3px double #b57532;border-radius:50%;color:#7d3922;background:#f9e4b7;
+  font:700 2cqw/1 serif;box-shadow:0 2px 4px #5c2f1c44;
+ }
+ #puzzleView.reference-puzzle {
+  position:absolute;inset:0;max-width:none;margin:0;padding:0;border:0;border-radius:0;background:none;
+ }
+ #puzzleView .puzzle-target { position:absolute;inset:0;margin:0;pointer-events:none; }
+ #puzzleView #puzzleRef {
+  position:absolute;left:45%;top:21.8%;width:9.8%;height:12.7%;
+  border:0;border-radius:0;box-shadow:none;background:#f7edd8;
+ }
+ #puzzleView #puzzleBoard {
+  --reference-layout:1;
+  position:absolute;left:23.2%;top:38.65%;margin:0;padding:0;border:0;border-radius:0;
+  box-shadow:none;background:#b38c54;
+ }
+ #puzzleView .puzzle-strip { box-shadow:inset 0 0 0 1px #b58745; }
+ #puzzleView #puzzleStatus {
+  position:absolute;left:20%;top:84.35%;width:60%;min-height:0;margin:0;
+  font:700 1.15cqw/1.4 'Microsoft YaHei','SimSun',serif;color:#8c3e23;text-align:center;
+ }
+ #puzzleView .puzzle-actions { position:absolute;inset:0;pointer-events:none; }
+ #puzzleView #puzzleReshuffle {
+  position:absolute;left:38.4%;top:88.3%;width:23.5%;height:6.3%;padding:0;
+  pointer-events:auto;border:0;border-radius:40%;background:transparent;box-shadow:none;font-size:0;color:transparent;
+ }
+ #puzzleView #puzzleReshuffle:hover { background:#fff0bf22; }
+
+ #compareOverlay { padding:0;overflow:hidden;background:#302014;backdrop-filter:none; }
+ #compareOverlay .compare-card {
+  position:relative;container-type:inline-size;
+  width:min(100vw,calc(100dvh * 1448 / 1086));aspect-ratio:1448 / 1086;
+  max-height:none;overflow:hidden;padding:0;border:0;border-radius:0;box-shadow:none;
+  background:url('../assets/ui/workshop/silk-compare-reference.webp') center/100% 100% no-repeat;
+ }
+ #compareOverlay #compareNote {
+  position:absolute;left:28%;top:26.3%;width:44%;
+  color:#6c3620;font:500 1.38cqw/1.4 'STKaiti','KaiTi','SimSun',serif;
+ }
+ #compareOverlay .compare-row { display:contents;margin:0; }
+ #compareOverlay .compare-row>div { display:contents; }
+ #compareOverlay .compare-row canvas {
+  position:absolute;top:32%;width:30%;height:42.2%;max-width:none;margin:0;
+  border:0;border-radius:0;background:transparent;aspect-ratio:auto;
+ }
+ #compareOverlay #silkOrigin { left:17.2%; }
+ #compareOverlay #silkMine { left:53.4%; }
+ #compareOverlay .compare-row small {
+  position:absolute;top:74.25%;width:22%;color:#3c2516;
+  font:700 1.65cqw/1.5 'STKaiti','KaiTi','SimSun',serif;
+ }
+ #compareOverlay .compare-row>div:first-child small { left:21.3%; }
+ #compareOverlay .compare-row>div:last-child small { left:56.9%; }
+ #compareOverlay #silkCollect {
+  position:absolute;left:33.2%;top:80.5%;width:34%;height:9%;padding:0;
+  border:0;border-radius:35%;background:transparent;box-shadow:none;font-size:0;color:transparent;
+ }
+ #compareOverlay #silkCollect:hover { background:#fff0bf22; }
+}
+
+@media(max-width:699px) {
+ .workshop-shell:has(#puzzleView:not([hidden])) {
+  position:relative;padding:36px 24px;max-height:95dvh;
+  border:8px solid transparent;border-radius:0;box-shadow:none;background:#faebca;
+  border-image:url('../assets/ui/workshop/blank-complete-frame.png') 180 130 130 fill / 36px / 0 stretch;
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-head {
+  position:absolute;inset:0;padding:0;border:0;background:none;pointer-events:none;
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-head>div {
+  position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);
+ }
+ .workshop-shell:has(#puzzleView:not([hidden])) .workshop-close {
+  position:absolute;top:4.5%;right:8%;width:28px;height:28px;padding:0;pointer-events:auto;
+  border:2px double #b67d34;border-radius:50%;color:#703b24;background:#f9e7c3;font-size:20px;
+ }
+ #puzzleView.reference-puzzle { padding:0;margin:12px 0 0;border:0;background:none; }
+ #puzzleView>h3 { font-size:21px; }
+ #puzzleView>p { font-size:13px;line-height:1.6; }
+ #puzzleView #puzzleRef { width:92px;height:92px; }
+ #compareOverlay .compare-card {
+  width:96vw;padding:32px 20px;border:6px double #ad7b38;background:#fae9c4;
+ }
+ #compareOverlay .compare-card>h3 {
+  position:static;width:auto;height:auto;clip-path:none;white-space:normal;font-size:20px;
+ }
+ #compareOverlay .compare-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px; }
+ #compareOverlay .compare-row canvas { width:100%;height:auto;aspect-ratio:8/11; }
+ #compareOverlay #compareNote { font-size:14px;line-height:1.5; }
+ #compareOverlay .compare-row small { font-size:12px; }
+ #compareOverlay #silkCollect { color:#fff0c4;background:#903d25;border:3px double #d9ac5a;border-radius:14px; }
+}

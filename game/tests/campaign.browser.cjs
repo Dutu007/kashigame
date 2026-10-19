@@ -111,7 +111,7 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(await first.locator('#compareOverlay').isVisible(), false);
       assert.equal(await first.evaluate(() => state.collection.length), 1);
       await first.evaluate(() => startMemory());
-      await first.locator('#wipe').click();
+      await first.locator('#memoryCurtain').click();
       await first.waitForFunction(() => state.chapterComplete && state.dialogueOpen);
       await first.locator('#skipButton').click();
       await page.locator('#completion').waitFor({ state: 'visible' });
@@ -220,7 +220,7 @@ fs.mkdirSync(output, { recursive: true });
 })().catch(error => { console.error(error); process.exitCode = 1; });
 
 async function chapterFrame(page, match) {
-  await page.waitForFunction(part => { const f = document.querySelector('iframe'); return f?.contentWindow?.location.href.includes(part); }, match);
+  await page.waitForFunction(part => { const f = document.querySelector('iframe'); const url = f?.contentWindow?.location.href; return url?.includes(part) && !url.includes('/intro/'); }, match);
   const frame = page.frames().find(frame => frame.url().includes(match));
   await frame.waitForLoadState('load');
   return frame;

@@ -47,10 +47,11 @@ function redrawPuzzleStrips(){
 function relayoutPuzzle(){
  const board=$('puzzleBoard');
  const parentW=board.parentElement&&board.parentElement.clientWidth;
- const S=Math.max(300,Math.min(PUZZLE_MAX_SIDE,(parentW||640)-28));
+ const reference=getComputedStyle(board).getPropertyValue('--reference-layout').trim()==='1';
+ const S=reference?parentW*.536:Math.max(240,Math.min(PUZZLE_MAX_SIDE,(parentW||640)-28));
  puzzleState.S=S;puzzleState.stripW=(S-(PUZZLE_STRIPS-1)*PUZZLE_GAP)/PUZZLE_STRIPS;
  puzzleState.step=puzzleState.stripW+PUZZLE_GAP;
- board.style.width=S+'px';board.style.height=S+'px';
+ board.style.width=S+'px';board.style.height=(reference?board.parentElement.clientHeight*.441:S)+'px';
  renderStripPositions();
 }
 function buildPuzzle(){

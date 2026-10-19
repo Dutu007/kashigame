@@ -1,0 +1,914 @@
+:root{
+  --design-w:1672;
+  --design-h:941;
+
+  --text:#70431F;
+  --accent:#8A5019;
+
+  /* 加深线条 */
+  --gold-line:rgba(184,128,48,.85);
+  --gold-diamond:rgba(170,115,35,.95);
+}
+
+
+*{
+  box-sizing:border-box;
+}
+
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#17110d;
+}
+
+
+body{
+  display:grid;
+  place-items:center;
+
+  font-family:
+  "Noto Serif SC",
+  "Source Han Serif SC",
+  "Songti SC",
+  serif;
+}
+
+
+/* =====================
+   主舞台
+===================== */
+
+#stage{
+
+  position:absolute;
+
+  left:50%;
+  top:50%;
+
+  width:1672px;
+  height:941px;
+
+  transform:
+  translate(-50%,-50%)
+  scale(var(--stage-scale,1));
+
+  transform-origin:center;
+
+  overflow:hidden;
+
+  isolation:isolate;
+}
+
+
+/* =====================
+   背景
+===================== */
+
+.background{
+
+  position:absolute;
+  inset:0;
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
+  z-index:0;
+}
+
+
+
+/* =====================
+   轻柔织物雾
+===================== */
+
+.fabric-mist{
+
+  position:absolute;
+  inset:0;
+
+  z-index:1;
+
+  pointer-events:none;
+
+  background:
+
+  linear-gradient(
+    90deg,
+    rgba(255,247,232,.12),
+    rgba(255,245,228,.05),
+    transparent 60%
+  );
+
+  opacity:.5;
+}
+
+
+
+/* =====================
+   织物纹理
+   降低性能消耗
+===================== */
+
+.fabric-texture{
+
+  position:absolute;
+  inset:-3%;
+
+  z-index:1;
+
+  opacity:.015;
+
+  pointer-events:none;
+
+  background-image:
+
+  repeating-linear-gradient(
+    15deg,
+    rgba(120,80,40,.4) 0 1px,
+    transparent 1px 8px
+  );
+
+}
+
+
+
+/* =====================
+   文字区域
+===================== */
+
+
+.narration{
+
+  position:absolute;
+
+  left:190px;
+  top:170px;
+
+  width:820px;
+
+  z-index:5;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:30px;
+
+  isolation:isolate;
+}
+
+
+
+/* =====================
+   暖黄色圆形底
+===================== */
+
+
+.narration::before{
+
+  content:"";
+
+  position:absolute;
+
+  left:30px;
+  top:-78px;
+
+  width:760px;
+  height:600px;
+
+  border-radius:50%;
+
+  z-index:-2;
+
+
+  background:
+
+  radial-gradient(
+    ellipse 68% 68% at 50% 45%,
+
+    rgba(248,233,200,.72),
+
+    rgba(245,226,189,.55) 35%,
+
+    rgba(241,218,177,.30) 65%,
+
+    transparent 100%
+  );
+
+
+  filter:blur(16px);
+
+}
+
+
+/* 内层柔光 */
+
+
+.narration::after{
+
+  content:"";
+
+  position:absolute;
+
+  left:90px;
+  top:0;
+
+  width:500px;
+  height:400px;
+
+
+  border-radius:50%;
+
+  z-index:-1;
+
+
+  background:
+
+  radial-gradient(
+    ellipse,
+
+    rgba(255,245,220,.28),
+
+    transparent 70%
+  );
+
+
+  filter:blur(12px);
+
+}
+
+
+
+/* =====================
+   单行结构
+===================== */
+
+/* ===============================
+   左侧章节引导线组件 V10
+   =============================== */
+
+.story-row{
+
+  display:grid;
+
+  grid-template-columns:70px 1fr;
+
+  column-gap:10px;
+
+  align-items:center;
+
+  min-height:72px;
+
+}
+
+
+/* 图标区域 */
+
+.guide{
+
+  position:relative;
+
+  width:70px;
+
+  height:52px;
+
+}
+
+
+
+/* 横线 */
+
+.guide-line{
+
+
+  position:absolute;
+
+
+  left:0;
+
+
+  top:25px;
+
+
+  width:62px;
+
+
+  height:1.6px;
+
+
+  background:
+  linear-gradient(
+    90deg,
+    rgba(171,112,30,.35),
+    rgba(193,135,48,.95)
+  );
+
+
+  opacity:0;
+
+
+  transform:
+  scaleX(0);
+
+
+  transform-origin:left center;
+
+
+  box-shadow:
+
+  0 0 5px
+  rgba(190,130,45,.35);
+
+
+  will-change:
+  transform,
+  opacity;
+
+}
+
+
+
+/* 菱形 */
+
+.guide-diamond{
+
+
+  position:absolute;
+
+
+  left:58px;
+
+
+  top:19px;
+
+
+  width:11px;
+
+
+  height:11px;
+
+
+  border:
+
+  1.5px solid
+
+  rgba(190,130,45,.95);
+
+
+
+  background:
+
+  rgba(255,245,220,.8);
+
+
+
+  transform:
+
+  rotate(45deg)
+
+  scale(.85);
+
+
+
+  opacity:0;
+
+
+
+  box-shadow:
+
+  0 0 6px
+
+  rgba(190,130,45,.3);
+
+
+
+  will-change:
+
+  transform,
+
+  opacity;
+
+}
+
+
+/* 菱形内部微光 */
+
+.guide-diamond::after{
+
+
+content:"";
+
+
+position:absolute;
+
+
+left:50%;
+
+
+top:50%;
+
+
+width:3px;
+
+
+height:3px;
+
+
+transform:
+
+translate(-50%,-50%);
+
+
+background:
+
+rgba(190,130,45,.35);
+
+
+border-radius:50%;
+
+
+}
+
+
+
+
+/* =====================
+   普通文字
+===================== */
+
+
+.story-text{
+
+  margin:0;
+
+  white-space:nowrap;
+
+
+  font-size:25px;
+
+  font-weight:500;
+
+
+  line-height:1.65;
+
+  letter-spacing:.02em;
+
+
+  color:var(--text);
+
+
+  opacity:0;
+
+
+  transform:translate3d(0,8px,0);
+
+  will-change:transform, opacity;
+
+
+  text-shadow:
+
+  0 1px 0
+  rgba(255,250,240,.25);
+
+}
+
+
+
+/* =====================
+   织梦巷
+===================== */
+
+
+.chapter-name{
+
+
+  font-size:33px;
+
+  font-weight:700;
+
+  font-style:italic;
+
+  color:var(--accent);
+
+  letter-spacing:.03em;
+
+}
+
+
+
+/* =====================
+   最后一行
+===================== */
+
+
+.ending{
+
+
+  font-size:34px;
+
+  font-weight:700;
+
+  font-style:italic;
+
+  color:var(--accent);
+
+}
+
+
+
+
+/* =====================
+   动画
+===================== */
+
+
+/* ===============================
+   出现动画 V10
+   更接近游戏章节转场
+   =============================== */
+
+
+.play .story-row .guide-line{
+
+
+animation:
+
+lineGrow
+
+0.85s
+
+cubic-bezier(.16,.82,.25,1)
+
+var(--delay)
+
+forwards;
+
+
+}
+
+
+
+.play .story-row .guide-diamond{
+
+
+animation:
+
+diamondIn
+
+0.80s
+
+cubic-bezier(.16,.82,.25,1)
+
+calc(var(--delay) + .25s)
+
+forwards;
+
+
+}
+
+
+
+.play .story-row .story-text{
+
+
+animation:
+
+textFloat
+
+1.40s
+
+cubic-bezier(.22,.61,.36,1)
+
+calc(var(--delay) + .18s)
+
+forwards;
+
+
+}@keyframes lineGrow{
+
+
+0%{
+
+transform:scaleX(0);
+
+opacity:0;
+
+}
+
+
+30%{
+
+opacity:.8;
+
+}
+
+
+100%{
+
+transform:scaleX(1);
+
+opacity:1;
+
+}
+
+}
+
+
+
+@keyframes diamondIn{
+
+
+0%{
+
+
+opacity:0;
+
+
+transform:
+
+rotate(45deg)
+
+scale(.90);
+
+
+}
+
+
+
+100%{
+
+
+opacity:1;
+
+
+transform:
+
+rotate(45deg)
+
+scale(1);
+
+
+}
+
+
+}
+
+
+
+
+@keyframes textFloat{
+
+
+0%{
+
+
+opacity:0;
+
+
+transform:
+
+  translate3d(0,8px,0);
+
+
+}
+
+
+
+100%{
+
+
+opacity:1;
+
+
+transform:
+
+translate3d(0,0,0);
+
+
+}
+
+
+}
+
+
+
+/* =====================
+   粒子
+===================== */
+
+
+.particles{
+
+position:absolute;
+inset:0;
+
+z-index:2;
+
+pointer-events:none;
+
+}
+
+
+
+.particles i{
+
+
+position:absolute;
+
+left:var(--x);
+
+top:var(--y);
+
+width:var(--s);
+
+height:var(--s);
+
+border-radius:50%;
+
+
+background:
+
+rgba(255,220,150,.7);
+
+
+opacity:.08;
+
+
+animation:
+
+particleFloat
+var(--d)
+ease-in-out
+var(--delay)
+infinite;
+
+}
+
+
+
+
+
+@keyframes particleFloat{
+
+
+0%,100%{
+
+transform:
+translateY(8px);
+
+opacity:.05;
+
+}
+
+
+50%{
+
+transform:
+translateY(-15px);
+
+opacity:.18;
+
+}
+
+}
+
+
+
+
+
+/* =====================
+   扫光
+===================== */
+
+
+.warm-sweep{
+
+position:absolute;
+
+inset:-20%;
+
+z-index:4;
+
+opacity:0;
+
+
+background:
+
+linear-gradient(
+105deg,
+transparent 45%,
+rgba(255,220,150,.16),
+transparent 55%
+);
+
+}
+
+
+.play .warm-sweep{
+
+
+animation:
+
+sweep
+1.2s
+ease-out
+8.9s
+forwards;
+
+
+}
+
+
+
+@keyframes sweep{
+
+
+0%{
+
+transform:translateX(-30%);
+opacity:0;
+
+}
+
+
+40%{
+
+opacity:.5;
+
+}
+
+
+100%{
+
+transform:translateX(30%);
+opacity:0;
+
+}
+
+}
+
+
+
+
+/* =====================
+   转场
+===================== */
+
+
+.handoff{
+
+position:absolute;
+
+inset:0;
+
+z-index:8;
+
+background:rgba(250,235,208,.92);
+opacity:0;
+pointer-events:none;
+
+}
+
+
+
+.play .handoff{
+
+animation:
+
+handoff
+.8s
+ease
+10.2s
+forwards;
+
+}
+
+
+
+@keyframes handoff{
+
+
+to{
+
+opacity:1;
+
+}
+
+}
+
+/* 保留装饰形状；用户开启减少动态效果时仅淡入，不移动。 */
+@media (prefers-reduced-motion: reduce){
+  .particles i, .play .warm-sweep{ animation:none; }
+  .play .story-row .guide-line,
+  .play .story-row .guide-diamond,
+  .play .story-row .story-text{ animation-name:reducedReveal; }
+  .guide-line{ transform:scaleX(1); }
+  .guide-diamond{ transform:rotate(45deg) scale(1); }
+  .story-text{ transform:none; }
+}
+@keyframes reducedReveal{ from{opacity:0} to{opacity:1} }
