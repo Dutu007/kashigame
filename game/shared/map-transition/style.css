@@ -1,0 +1,250 @@
+
+  :root {
+    --gold: #f7d58b;
+    --gold-strong: #fff1b8;
+    --gold-soft: rgba(248, 205, 114, .54);
+    --cycle: 3.4s;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #16110c;
+  }
+  body {
+    display: grid;
+    place-items: center;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  /* 保持严格 16:9，直接双击 index.html 就能看 */
+  #stage {
+    position: relative;
+    width: min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #d8b07b;
+    isolation: isolate;
+  }
+
+  #bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* 只在左下织结附近加很轻的明暗整合，不改变主背景 */
+  #fxShade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 30% 30% at 11% 83%,
+        rgba(255,225,159,.10) 0%,
+        rgba(255,205,113,.035) 42%,
+        transparent 72%);
+    mix-blend-mode: screen;
+  }
+
+  #knotArea {
+    position: absolute;
+    left: 3.9%;
+    bottom: 5.8%;
+    width: 13.2%;
+    aspect-ratio: 1 / 1;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .aura {
+    position: absolute;
+    inset: -34%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle,
+        rgba(255,247,206,.55) 0%,
+        rgba(255,216,126,.27) 22%,
+        rgba(255,188,76,.12) 43%,
+        rgba(255,188,76,0) 70%);
+    filter: blur(7px);
+    animation: auraPulse var(--cycle) ease-in-out infinite;
+  }
+
+  .aura.a2 {
+    inset: -18%;
+    opacity: .62;
+    filter: blur(3px);
+    animation-delay: -.55s;
+  }
+
+  #knot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform-origin: 50% 50%;
+    filter:
+      drop-shadow(0 0 4px rgba(255,241,184,.95))
+      drop-shadow(0 0 12px rgba(242,177,72,.72))
+      drop-shadow(0 0 26px rgba(239,147,51,.34));
+    animation: knotPulse var(--cycle) cubic-bezier(.42,0,.2,1) infinite;
+  }
+
+  /* 第二层虚影让脉动更柔和，不造成明显残影 */
+  #knotGhost {
+    position: absolute;
+    inset: -1.5%;
+    width: 103%;
+    height: 103%;
+    object-fit: contain;
+    opacity: .18;
+    filter: blur(3px) brightness(1.25);
+    animation: ghostPulse var(--cycle) ease-in-out infinite;
+  }
+
+  #lineFx {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .line-base {
+    fill: none;
+    stroke: rgba(255, 230, 170, .31);
+    stroke-width: 1.25;
+  }
+
+  .line-main {
+    fill: none;
+    stroke: url(#lineGradient);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    filter: url(#softGlow);
+    path-length: 1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: drawLine var(--cycle) ease-in-out infinite;
+  }
+
+  .line-main.left {
+    animation-delay: .08s;
+  }
+
+  .ornament {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ornamentPulse var(--cycle) ease-in-out infinite;
+    filter: url(#tinyGlow);
+  }
+
+  .ornament.o2 { animation-delay: -.24s; }
+  .ornament.o3 { animation-delay: -.48s; }
+  .ornament.o4 { animation-delay: -.72s; }
+
+  .spark {
+    filter: url(#sparkGlow);
+    opacity: 0;
+    animation: sparkPulse 1.4s ease-in-out infinite;
+  }
+
+  /* 非常克制的光尘，只在织结周边 */
+  .dust {
+    position: absolute;
+    z-index: 6;
+    left: 3.5%;
+    bottom: 4.5%;
+    width: 18%;
+    height: 24%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .dust i {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: rgba(255,235,183,.9);
+    box-shadow: 0 0 7px rgba(255,199,89,.75);
+    animation: floatSpark 2.9s linear infinite;
+  }
+  .dust i:nth-child(1) { left: 21%; top: 67%; animation-delay: -.2s; }
+  .dust i:nth-child(2) { left: 48%; top: 72%; animation-delay: -1.4s; }
+  .dust i:nth-child(3) { left: 66%; top: 54%; animation-delay: -.8s; }
+  .dust i:nth-child(4) { left: 31%; top: 42%; animation-delay: -2.1s; }
+  .dust i:nth-child(5) { left: 76%; top: 71%; animation-delay: -1.9s; }
+  .dust i:nth-child(6) { left: 58%; top: 31%; animation-delay: -.45s; }
+
+  @keyframes knotPulse {
+    0%, 100% { transform: scale(.965) rotate(-.25deg); filter:
+      drop-shadow(0 0 3px rgba(255,241,184,.76))
+      drop-shadow(0 0 9px rgba(242,177,72,.55))
+      drop-shadow(0 0 20px rgba(239,147,51,.23)); }
+    28% { transform: scale(1.025) rotate(.20deg); }
+    43% { transform: scale(.992) rotate(0deg); }
+    67% { transform: scale(1.045) rotate(.28deg); filter:
+      drop-shadow(0 0 7px rgba(255,248,214,1))
+      drop-shadow(0 0 18px rgba(244,186,74,.9))
+      drop-shadow(0 0 38px rgba(239,147,51,.44)); }
+    82% { transform: scale(1.005) rotate(0deg); }
+  }
+
+  @keyframes auraPulse {
+    0%,100% { transform: scale(.83); opacity: .30; }
+    35% { transform: scale(1.06); opacity: .70; }
+    66% { transform: scale(1.17); opacity: .92; }
+    83% { transform: scale(.98); opacity: .52; }
+  }
+
+  @keyframes ghostPulse {
+    0%,100% { transform: scale(.96); opacity: .10; }
+    55% { transform: scale(1.10); opacity: .30; }
+    75% { transform: scale(1.04); opacity: .15; }
+  }
+
+  @keyframes drawLine {
+    0%   { stroke-dashoffset: 1; opacity: .16; }
+    17%  { stroke-dashoffset: 1; opacity: .38; }
+    53%  { stroke-dashoffset: 0; opacity: .96; }
+    77%  { stroke-dashoffset: 0; opacity: .72; }
+    100% { stroke-dashoffset: -1; opacity: .08; }
+  }
+
+  @keyframes ornamentPulse {
+    0%,100% { opacity: .28; transform: scale(.76) rotate(45deg); }
+    46% { opacity: .95; transform: scale(1) rotate(45deg); }
+    69% { opacity: .62; transform: scale(.88) rotate(45deg); }
+  }
+
+  @keyframes sparkPulse {
+    0%,100% { opacity: 0; r: 2.5px; }
+    48% { opacity: 1; r: 5px; }
+  }
+
+  @keyframes floatSpark {
+    0% { transform: translate(0, 16px) scale(.6); opacity: 0; }
+    18% { opacity: .9; }
+    70% { opacity: .55; }
+    100% { transform: translate(9px, -42px) scale(1.25); opacity: 0; }
+  }
+
+  /* 空格暂停，R重播；界面不显示按钮 */
+  body.paused * {
+    animation-play-state: paused !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }

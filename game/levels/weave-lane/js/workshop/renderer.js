@@ -378,5 +378,6 @@ function renderEditingFrame(rec,state2,target){
 }
 // 悬挂挂布成品（程序化褶皱/丝光/投影/木杆/流苏；占位美术，可替换为正式素材）
 function renderHanging(target,colors,tplId){
- return renderFinishedHanging(target,colors,tplId);
+ const framed=['hangingCanvas','silkOrigin','silkMine'].includes(target.id);
+ return renderFinishedHanging(target,colors,tplId,framed?{transparent:true,clothOnly:true}:undefined);
 }

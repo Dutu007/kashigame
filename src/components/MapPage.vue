@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import GameLoading from './GameLoading.vue'
+import WeaveTransition from './WeaveTransition.vue'
 import mapBackgroundUrl from '../../地图.png'
 import { mapLevels } from '../data/mapLevels'
 const regions = [
@@ -20,6 +21,7 @@ const activeGame = ref(null)
 const gameFrame = ref(null)
 const isGameLoading = ref(false)
 const gameReady = ref(false)
+const gameRevealed = ref(false)
 const gameChapters = { 3: { id: 'weave', title: '织梦巷' }, 7: { id: 'karez', title: '坎儿井' } }
 const selectedLevel = ref(null)
 const closeButton = ref(null)
@@ -41,8 +43,9 @@ function selectLevel(level, event) {
   if (chapter) {
     const hero = selectedCharacter.value === 'male' ? 'aide' : 'aysu'
     gameReady.value = false
+    gameRevealed.value = false
     isGameLoading.value = true
-    activeGame.value = { ...chapter, url: `${import.meta.env.BASE_URL}game/index.html?v=3&entry=map&chapter=${chapter.id}&hero=${hero}` }
+    activeGame.value = { ...chapter, url: `${import.meta.env.BASE_URL}game/index.html?v=weave-smooth-20261020-2&entry=map&chapter=${chapter.id}&hero=${hero}` }
     return
   }
   imageFailed.value = false
@@ -81,11 +84,11 @@ onBeforeUnmount(() => {
         </g>
       </svg>
     </div>
-    <section v-if="activeGame" class="game-overlay" :inert="isGameLoading ? true : undefined" :aria-label="activeGame.title">
+    <section v-if="activeGame" class="game-overlay" :class="{ 'is-preparing': isGameLoading && !gameRevealed && activeGame.id === 'weave' }" :inert="isGameLoading ? true : undefined" :aria-label="activeGame.title">
       <header class="game-header"><button type="button" @click="closeGame">‹ 返回小镇地图</button><h1>{{ activeGame.title }}</h1></header>
       <iframe ref="gameFrame" :src="activeGame.url" :title="activeGame.title" allow="autoplay; fullscreen" />
     </section>
-    <GameLoading v-if="isGameLoading" class="chapter-loading" :destination="activeGame.title" :ready="gameReady" @complete="finishGameLoading" />
+    <component :is="activeGame?.id === 'weave' ? WeaveTransition : GameLoading" v-if="isGameLoading" class="chapter-loading" :destination="activeGame.title" :ready="gameReady" @reveal="gameRevealed = true" @complete="finishGameLoading" />
     <Transition name="preview">
       <div v-if="selectedLevel" class="preview-backdrop" @click.self="closePreview"><section class="level-preview" role="dialog" aria-modal="true" aria-labelledby="preview-title"><header class="preview-header"><div><p>喀什小镇 · 第 {{ String(selectedLevel.id).padStart(2, '0') }} 关</p><h2 id="preview-title">{{ selectedLevel.title }}</h2></div><button ref="closeButton" type="button" class="preview-close" aria-label="关闭关卡预览" @click="closePreview">×</button></header><div class="preview-art"><p v-if="imageFailed">关卡图片暂时加载失败，请关闭后重试。</p><img v-else :src="selectedLevel.image" :alt="`${selectedLevel.title}关卡地图`" @error="imageFailed = true" /></div><p class="preview-caption">{{ selectedLevel.detail }}</p></section></div>
     </Transition>
@@ -95,6 +98,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .chapter-loading { position: fixed; inset: 0; z-index: 50; }
 .game-overlay { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #21170f; }
+.game-overlay.is-preparing { visibility: hidden; }
 .game-header { display: flex; align-items: center; gap: 20px; padding: 8px 16px; color: #f9e5bc; background: #342519; }
 .game-header h1 { margin: 0; font: 700 18px/1.4 serif; }
 .game-header button { padding: 8px 14px; border: 1px solid #b98a4d; border-radius: 6px; color: #f9e5bc; background: #503722; cursor: pointer; }

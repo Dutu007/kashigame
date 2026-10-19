@@ -6,7 +6,7 @@
   const canEnter = id => Campaign.canEnter(id) || (fromMap && (id === 'weave' || id === 'karez'));
   if (fromMap && ['aide', 'aysu'].includes(query.get('hero'))) Campaign.chooseCharacter(query.get('hero'));
   const chapters = {
-    weave: { title: '第一关 · 织梦巷', url: 'levels/weave-lane/index.html' },
+    weave: { title: '第一关 · 织梦巷', url: 'levels/weave-lane/index.html?v=weave-smooth-20261020-2' },
     karez: { title: '第二关 · 坎儿井', url: 'karez.html' },
   };
   let frame = null, current = null, completedChapter = null;
@@ -34,14 +34,49 @@
     if (!chapters[id] || !canEnter(id)) return;
     if ($('completion').open) $('completion').close();
     unload(); current = id; Campaign.enter(id);
-    $('menu').hidden = true; $('play').hidden = false; $('loading').hidden = false;
+    const coveredEntry = !fromMap && id === 'weave';
+    $('menu').hidden = !coveredEntry; $('play').hidden = false; $('loading').hidden = false;
+    $('play').style.visibility = coveredEntry ? 'hidden' : '';
     $('chapterTitle').textContent = chapters[id].title;
     frame = document.createElement('iframe'); frame.title = chapters[id].title; frame.allow = 'autoplay; fullscreen';
-    const url = new URL(chapters[id].url, document.baseURI);
+    const intro = id === 'weave';
+    const url = new URL(intro ? 'levels/weave-lane/intro/index.html?embedded=1' : chapters[id].url, document.baseURI);
     frame.src = url.href;
-    frame.addEventListener('load', () => { $('loading').hidden = true; if (fromMap) {
+    const chapterFrame = frame;
+    let revealChapter;
+    const chapterReady = new Promise(resolve => { revealChapter = resolve; });
+    const entryTransition = !fromMap && intro
+      ? WeaveMapTransition.run(() => {
+          $('menu').hidden = true;
+          $('play').style.visibility = '';
+          return chapterReady;
+        })
+      : null;
+    frame.addEventListener('load', () => {
+      if (frame !== chapterFrame) return;
+      if (intro) chapterFrame.contentWindow.addEventListener('zhimengxiangTransitionComplete', () => {
+        if (frame !== chapterFrame) return;
+        $('loading').hidden = false;
+        chapterFrame.addEventListener('load', () => {
+          if (frame !== chapterFrame) return;
+          $('loading').hidden = true;
+          chapterFrame.contentWindow.focus();
+        }, { once: true });
+        chapterFrame.src = new URL(chapters[id].url, document.baseURI).href;
+      }, { once: true });
+      $('loading').hidden = true; if (fromMap) {
       window.parent.postMessage({ type: 'map-chapter-ready' }, location.origin);
-    } else frame?.contentWindow.focus(); }, { once: true });
+    } else {
+      const reveal = () => {
+        if (frame !== chapterFrame) return;
+        if (intro) chapterFrame.contentWindow.ChapterBridge.resume();
+        chapterFrame.contentWindow.focus();
+      };
+      if (entryTransition) {
+        revealChapter();
+        entryTransition.then(reveal);
+      } else reveal();
+    } }, { once: true });
     $('chapterMount').appendChild(frame);
     history.replaceState(null, '', location.pathname + '#' + id);
     refresh();

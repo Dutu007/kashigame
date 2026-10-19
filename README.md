@@ -4,6 +4,12 @@
 
 地图第 3 个区域进入织梦巷，第 7 个区域进入坎儿井；其余区域目前展示关卡图片预览。从地图选择的角色会带入游戏，退出关卡后返回小镇地图。
 
+进入织梦巷时先播放章节序章（约 11 秒），结束后自动进入关卡或接续存档；序章资源位于 `game/levels/weave-lane/intro/`。
+
+织梦巷入口及巷内各地图切换使用统一的织结发光转场：静止街巷背景、左下织结、金色延展线与光点，每次播放完整的 3.4 秒循环，等目标地图就绪后淡出。其他区域仍使用原转场；织梦巷文字序章继续保留。转场资源位于 `game/shared/map-transition/`。
+
+织梦巷的白坯拼图、拼合完成弹窗、成品预览及成绸对比使用参考图装饰，纹样与配色由实际 Canvas 渲染。样式在 `game/levels/weave-lane/css/finished-reference.css`，框架素材在 `game/levels/weave-lane/assets/ui/workshop/`；可使用 `scripts/prepare-weave-reference-ui.py` 从原参考图片重新生成。
+
 ## 启动完整项目
 
 需要 Node.js 22 和 npm。在项目根目录执行：

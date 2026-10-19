@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>喀什小镇 · 地图转场</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="paused">
+<main id="stage" aria-label="正在穿行喀什小镇">
+  <img id="bg" src="assets/background.png" alt="" draggable="false" />
+  <div id="fxShade"></div>
+
+  <!-- 金色延展线：位置按 1600×900 的设计坐标锁定 -->
+  <svg id="lineFx" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="lineGradient" x1="0" x2="1">
+        <stop offset="0%" stop-color="#efc66f" stop-opacity=".12"/>
+        <stop offset="25%" stop-color="#ffe7a4" stop-opacity=".9"/>
+        <stop offset="52%" stop-color="#fff6ca" stop-opacity="1"/>
+        <stop offset="100%" stop-color="#dba74e" stop-opacity=".25"/>
+      </linearGradient>
+      <filter id="softGlow" x="-60%" y="-400%" width="220%" height="900%">
+        <feGaussianBlur stdDeviation="2.4" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="tinyGlow" x="-200%" y="-200%" width="500%" height="500%">
+        <feGaussianBlur stdDeviation="2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="sparkGlow" x="-500%" y="-500%" width="1100%" height="1100%">
+        <feGaussianBlur stdDeviation="4.2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- 织结中心大约位于 (168, 748) -->
+    <path class="line-base" d="M12 748 H72" />
+    <path class="line-base" d="M264 748 H760" />
+
+    <path class="line-main left" pathLength="1" d="M12 748 H77" />
+    <path class="line-main" pathLength="1" d="M259 748 H760" />
+
+    <!-- 左侧小菱形 -->
+    <rect class="ornament o1" x="51" y="739" width="16" height="16"
+          fill="none" stroke="#ffe9ad" stroke-width="2"/>
+    <rect class="ornament o2" x="75" y="741.5" width="11" height="11"
+          fill="none" stroke="#f0c772" stroke-width="1.6"/>
+
+    <!-- 右侧延展纹样 -->
+    <rect class="ornament o2" x="279" y="738" width="18" height="18"
+          fill="none" stroke="#ffe9ad" stroke-width="2"/>
+    <rect class="ornament o3" x="309" y="741.5" width="11" height="11"
+          fill="none" stroke="#f1ca76" stroke-width="1.7"/>
+    <rect class="ornament o4" x="337" y="738" width="18" height="18"
+          fill="none" stroke="#ffe9ad" stroke-width="2"/>
+    <circle cx="372" cy="748" r="2.7" fill="#fff1bd" opacity=".75"/>
+    <circle cx="384" cy="748" r="1.6" fill="#edbd65" opacity=".72"/>
+
+    <!-- 沿右侧线缓慢滑动的光点 -->
+    <circle class="spark" cx="0" cy="0" r="4" fill="#fff7d4">
+      <animateMotion dur="3.4s" repeatCount="indefinite"
+                     path="M265 748 H745" keyTimes="0;0.18;0.72;1"
+                     keyPoints="0;0;1;1" calcMode="linear"/>
+    </circle>
+  </svg>
+
+  <div id="knotArea">
+    <div class="aura"></div>
+    <div class="aura a2"></div>
+    <img id="knotGhost" src="assets/knot.png" alt="" draggable="false" />
+    <img id="knot" src="assets/knot.png" alt="织结转场标识" draggable="false" />
+  </div>
+
+  <div class="dust" aria-hidden="true">
+    <i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+</main>
+
+
+<script src="ready.js?v=smooth-2"></script>
+</body>
+</html>

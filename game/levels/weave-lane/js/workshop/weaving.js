@@ -108,6 +108,7 @@ function openCompare(){
  const ov=$('compareOverlay');
  const mineOpts=regionSilkOpts();
  const bp=blueprintById(state.patternPlan.blueprint),pal=bp.palette;
+ $('silkOriginLabel').textContent='蓝本 · '+bp.name;
  // 蓝本与玩家成绸共用挂绸展示，蓝本显式使用其原始色板。
  const tpl=regionTemplate(state.patternPlan.blueprint);
  const basePalette={0:pal.base,1:pal.main,2:darken(pal.main,.35),3:lighten(pal.main,.2),

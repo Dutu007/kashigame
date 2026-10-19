@@ -13,6 +13,7 @@ function pushInAndOpenDye(){
 }
 // 交互、主循环与启动
 function interact(){
+ if(window.WalkEditor?.active)return;
  if(state.dialogueOpen){advanceDialogue();return}
  if(state.busy)return;
  const scene=scenes[state.scene];
@@ -55,17 +56,17 @@ function interact(){
  render();
 }
 function startMemory(){
- state.busy=true;$('wipe').classList.add('memory');$('wipe').onclick=finishMemory;$('functionBar').hidden=false;
+ state.busy=true;$('memoryCurtain').classList.add('memory');$('memoryCurtain').onclick=finishMemory;$('functionBar').hidden=false;
  const lines=['旧时染线的人围在缸边。','织坊里的梭子在经线间来回。','孩子举起一小段同样纹样的绸。','阿木提看见了玩家织出的新绸。','还有许多故事，正等着下一双手。'];
  let index=0;function next(){if(!state.busy)return;
-  $('wipe').textContent=lines[index++];
+  $('memoryCurtain').textContent=lines[index++];
   if(index<=lines.length)state.memoryTimer=setTimeout(next,10000);
   else finishMemory();
  }next();
 }
 function finishMemory(){
- if(!$('wipe').classList.contains('memory'))return;
- $('wipe').onclick=null;clearTimeout(state.memoryTimer);$('wipe').classList.remove('memory');
+ if(!$('memoryCurtain').classList.contains('memory'))return;
+ $('memoryCurtain').onclick=null;clearTimeout(state.memoryTimer);$('memoryCurtain').classList.remove('memory');
  state.chapterComplete=true;state.busy=false;
  LevelOneProgress.save();
  showDialogue([{speaker:'阿木提',text:'谢谢你们帮我找到开头。后面的，我还能教。',emotion:'praise'},
@@ -81,7 +82,7 @@ window.addEventListener('blur',()=>keys.clear());
 function frame(now){
  let dt=Math.max(0,Math.min((now-last)/1000,.05));last=now;
  if(typeof Ambient !== 'undefined')Ambient.update(dt);
- if(!state.busy){
+ if(!state.busy&&!window.WalkEditor?.active){
   const dx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'));
   const dy=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'));
   const length=Math.hypot(dx,dy)||1;
@@ -121,7 +122,7 @@ $('paletteClose').onclick=()=>{$('paletteModal').hidden=true;paletteRole=null};
 $('mixDefault').onclick=mixDefault;$('mixStart').onclick=mixStart;
 $('puzzleReshuffle').onclick=reshufflePuzzle;$('guideBtn').onclick=guideStep;$('demoSkip').onclick=skipDemo;$('silkCollect').onclick=collectSilk;
 $('dialogueOptions').onclick=e=>{if(e.target.matches('button')){showToast(`已选择：${e.target.textContent}`);closeDialogue();render()}};
-$('skipButton').onclick=()=>{if($('wipe').classList.contains('memory'))finishMemory();else if(state.dialogueOpen){const after=state.afterDialogue;closeDialogue();if(after)after()}};
+$('skipButton').onclick=()=>{if($('memoryCurtain').classList.contains('memory'))finishMemory();else if(state.dialogueOpen){const after=state.afterDialogue;closeDialogue();if(after)after()}};
 let pendingCharacter=Campaign.snapshot().character;
 function selectChoice(ch){pendingCharacter=ch;$('choice-aide').classList.toggle('selected',ch==='aide');$('choice-aysu').classList.toggle('selected',ch==='aysu')}
 $('choice-aide').onclick=()=>selectChoice('aide');$('choice-aysu').onclick=()=>selectChoice('aysu');

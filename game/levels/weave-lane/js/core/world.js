@@ -35,6 +35,7 @@ function loadScene(n,spawn){
  $('amutiDye').hidden=n!==5;
  $('foreground').innerHTML=(scene.foreground||[]).map(poly=>'<img class="foreground-piece" src="'+scene.image+'" alt="" style="clip-path:'+toClip(poly)+'">').join('');
  updateAvatarArt();render();updateInteractionHint();
+ window.dispatchEvent(new Event('weave-scene-change'));
  if(n===5){
   // 染院：阿木提在缸边等候。未扎束→兜底（可重复）；扎好白坯首次进院→迎接讲解（仅一次）
   setTimeout(()=>{
@@ -51,9 +52,12 @@ function render(){
 function transitionToScene(n,spawn,message,portalId){
  if(state.busy)return;
  state.busy=true;state.portalLock=portalId||null;
- $('wipe').textContent=message||'穿过织梦巷';
- $('wipe').classList.remove('show');void $('wipe').offsetWidth;$('wipe').classList.add('show');
- setTimeout(()=>{loadScene(n,spawn);setTimeout(()=>{state.busy=false;$('wipe').classList.remove('show')},420)},360);
+ keys.clear();
+ WeaveMapTransition.run(async()=>{
+  loadScene(n,spawn);
+  const background=$('background');
+  if(background.decode)await background.decode().catch(()=>{});
+ }).finally(()=>{keys.clear();state.busy=state.dialogueOpen;});
 }
 function checkPortals(){
  if(state.busy)return;
