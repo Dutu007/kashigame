@@ -4,7 +4,9 @@ import HomePage from './components/HomePage.vue'
 import CharacterSelect from './components/CharacterSelect.vue'
 import GameLoading from './components/GameLoading.vue'
 import MapPage from './components/MapPage.vue'
-import femaleCharacterUrl from './assets/processed/female-character-transparent.png'
+import mapBackgroundUrl from './assets/kashgar-city-v3.png'
+import maleCharacterUrl from './assets/processed/male-character-transparent-v2.png'
+import femaleCharacterUrl from './assets/processed/female-character-transparent-v2.png'
 import journeyButtonUrl from './assets/processed/start-journey-button-transparent.png'
 
 const view = ref('home')
@@ -17,9 +19,9 @@ function preload(url) {
 onMounted(() => {
   preload('/首页加载.png')
   preload('/加载动画所用材质.png')
-  preload('/地图.png')
+  preload(mapBackgroundUrl)
   preload('/角色选择背景图.png')
-  preload('/男性角色.png')
+  preload(maleCharacterUrl)
   preload(femaleCharacterUrl)
   preload(journeyButtonUrl)
 })

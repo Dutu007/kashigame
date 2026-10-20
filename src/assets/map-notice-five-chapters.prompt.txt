@@ -1,0 +1,17 @@
+Use case: illustration-story / Chinese game announcement. Create ONLY the lower content insert for the existing game guide in reference 1. Do NOT draw the outer frame, header, tabs, close button or title 喀什小镇. They already exist in the web page and will be preserved. Reference 1 is STYLE ONLY: cream parchment, vermilion Chinese Songti calligraphy, delicate gold ornaments. Reference 2 is the ACTUAL five-chapter project map, preserve its exact five locations and arrangement in the map illustration: lower left textile alley, upper left desert three stone wells and shelter, central bazaar, upper right pottery courtyard, lower right music courtyard. Create a wide 2:1 rectangular announcement content panel, full bleed opaque parchment, no outer border. Left 66%: large headline "五个关卡 · 两段旅程" and smaller subtitle "从织梦巷出发，循水脉走进坎儿井". Below show reference 2 faithfully as a readable illustrated map, with five elegant numbered small labels: "1 织梦巷" at lower left, "2 坎儿井" at upper left, "3 喀什巴扎" at center, "4 土陶工坊" at upper right, "5 木卡姆庭院" at lower right. Labels 1 and 2 have small green "已开放" status; labels 3 4 5 have small muted "待开发" status. Do not invent other destinations. Right 34% clean parchment information column with three sections, separated by fine gold rules, readable Chinese typography:
+section heading "已开放关卡"
+"01 织梦巷"
+"辨纹、扎线、染绸"
+"02 坎儿井"
+"制作绳梯与陶灯"
+"深入暗渠，清淤修补"
+section heading "后续关卡"
+"喀什巴扎 · 土陶工坊"
+"木卡姆庭院"
+"均待开发，敬请期待"
+section heading "地图探索"
+"点击区域或关卡标牌"
+"前两关可直接进入"
+"后三关显示待开发提示"
+"关卡内可返回小镇地图"
+Avoid all unsupported claims about photography, unlockable albums, collection quests, ten regions, or locked sequential access. Text must be accurate and readable with ample breathing room. No new outer frame. The image ends in plain cream parchment at the right and lower edges; leave 22px safe padding around content. Professional cohesive warm illustrated announcement, precise Chinese text.
