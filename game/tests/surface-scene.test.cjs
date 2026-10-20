@@ -16,13 +16,14 @@ function fixture() {
     Phaser: { Scene: class {} }, G: { state, restored: false },
     SURF: { wells: [645, 1594, 2667] }, surfaceGroundY: () => 640,
     SaveService: { save: () => saves.push(JSON.parse(JSON.stringify(state))) },
+    KarezTransitions: { play: (_id, done) => done() },
   };
   vm.createContext(context);
   vm.runInContext(source + '\nthis.SurfaceScene = SurfaceScene;', context);
   const scene = new context.SurfaceScene();
   scene.cameras = { main: { fadeOut() {} } };
   scene.time = { delayedCall: (_delay, callback) => timers.push(callback) };
-  scene.scene = { start: (key, data) => transitions.push({ key, seg: data.seg }) };
+  scene.scene = { start: (key, data) => { transitions.push({ key, seg: data.seg }); scene.fading = false; } };
   return { scene, state, saves, transitions, timers, context };
 }
 

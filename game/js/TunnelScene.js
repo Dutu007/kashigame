@@ -17,8 +17,8 @@ class TunnelScene extends Phaser.Scene {
 
   create() {
     this.seg = SEGMENTS[this.segKey];
-    this.fading = false; this.vy = 0; this.onGround = true;
-    this.local = null;       // null | {kind:'silt'}；UC 补口改为独立 UI 工作台
+    this.fading = false;
+    this.local = null;       // null | {kind:'silt'|'patch'}；两处作业都在现场进行
     this.localMarkers = [];  // 作业模式内的目标菱形标记
     this.lampImg = null;     // 场景重启后旧引用已随显示列表销毁，必须清空
     const cam = this.cameras.main;
@@ -32,7 +32,7 @@ class TunnelScene extends Phaser.Scene {
       this.bg.setTexture(this.seg.bgFixed);
     }
 
-    // （井下不再绘制绳梯贴图：布设即下井，转场画面后续由视频替代）
+    // 井筒攀爬由转场近景表现；本场景保留井底落脚区。
 
     // 出生点：井筒进入偏离中心64（§10）
     const sx = this.seg.shaftX + 64;
@@ -69,12 +69,13 @@ class TunnelScene extends Phaser.Scene {
     this.prompt.add([this.promptPanel, this.promptText]);
     this._lastLabel = null;
 
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC');
-    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E,F,T,R,ESC');
+    this.keys = this.input.keyboard.addKeys('A,D,LEFT,RIGHT,E,F,ESC');
+    this.input.keyboard.addCapture('A,D,LEFT,RIGHT,E,F,ESC');
 
     if (!G.ui) this.scene.launch('UI');
+    this.patchRepair = this.segKey === 'UC' && !G.state.uc.done ? new KarezPatchRepair(this) : null;
     this.time.delayedCall(400, () => {
-      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · F 油灯 · E 互动 · Esc 退出');
+      setGoal(this.goalText()); setHint(CONTROL_HINT);
       if (G.ui && firstDescent) { // §06：首次照明教学在首次下井的井底触发，与下井的井无关
         G.ui.toast.show(`进入${SEG_TITLES[this.segKey]}`, '井底落脚区 · 按 F 点亮土陶小油灯');
       }
@@ -86,6 +87,7 @@ class TunnelScene extends Phaser.Scene {
   // -------- 目标文案（§05/§15：只追踪当前障碍） --------
   goalText() {
     const s = G.state;
+    if (this.local?.kind === 'patch' && this.patchRepair) return this.patchRepair.goalText();
     if (this.segKey === 'UA') {
       if (!s.uaInspected) return '检查本段的水痕和水流';
       return '沿梯返回地表，清理第二口井';
@@ -99,14 +101,15 @@ class TunnelScene extends Phaser.Scene {
 
   get locked() {
     const d = G.ui && G.ui.dialogue;
-    return this.fading || !!(G.ui && G.ui.modalOpen) || !!d && (d.isOpen || this.time.now - d.closedAt < 180);
+    return this.fading || KarezTransitions.active || !!(G.ui && G.ui.modalOpen) || !!d && (d.isOpen || this.time.now - d.closedAt < 180);
   }
 
   // 局部作业模式的活动范围
   get zoneBounds() {
     if (!this.local) return [60, W - 60];
     const cx = this.local.kind === 'silt' ? this.seg.siltX : this.seg.patchX;
-    return [cx - 300, cx + 300];
+    const radius = this.local.kind === 'patch' ? 480 : 300;
+    return [Math.max(60, cx - radius), Math.min(W - 60, cx + radius)];
   }
 
   update(time, delta) {
@@ -115,7 +118,7 @@ class TunnelScene extends Phaser.Scene {
     const p = this.player;
     const previousX = p.x;
     let direction = 0;
-    const moveSpeed = 220;
+    const moveSpeed = PLAYER_MOVE_SPEED;
 
     if (!this.locked) {
       let dir = 0;
@@ -126,7 +129,6 @@ class TunnelScene extends Phaser.Scene {
         p.x = Phaser.Math.Clamp(p.x + dir * moveSpeed * dt, lo, hi);
         direction = dir;
       }
-      if (this.onGround && jd(k.SPACE)) { this.vy = -500; this.onGround = false; } // 井底小跳（头顶净高270）
       if (jd(k.F)) {
         if (G.state.lampOwned) {
           G.state.lampOn = !G.state.lampOn; // §12：F 开关油灯
@@ -136,20 +138,16 @@ class TunnelScene extends Phaser.Scene {
       if (jd(k.ESC) && this.local) this.exitLocal();   // §13/§14：退出作业并保留进度
     }
 
-    if (!this.onGround) { this.vy += 1900 * dt; p.y += this.vy * dt; }
-    const gy = this.seg.groundY(p.x);
-    if (this.onGround) {
-      p.y = gy; // 贴地行走：y 跟随地形折线
-    } else if (p.y >= gy && this.vy >= 0) {
-      p.y = gy; this.vy = 0; this.onGround = true;
-    }
+    p.y = this.seg.groundY(p.x); // 行走始终贴合地形折线。
 
-    HeroActor.update(p, direction, p.x !== previousX, this.onGround, moveSpeed);
+    HeroActor.update(p, direction, p.x !== previousX, moveSpeed);
 
     // 相机手动平滑跟随（取注视点略高于脚底），并按边界钳制
     const cam = this.cameras.main;
-    const tx = p.x - VIEW_W / (2 * cam.zoom);
-    const ty = p.y - 120 - VIEW_H / (2 * cam.zoom);
+    const focusX = this.local?.kind === 'patch' ? this.seg.patchX : p.x;
+    const focusY = this.local?.kind === 'patch' ? 620 : p.y;
+    const tx = focusX - VIEW_W / (2 * cam.zoom);
+    const ty = focusY - 120 - VIEW_H / (2 * cam.zoom);
     const kMove = Math.min(1, dt * 6);
     cam.scrollX = Phaser.Math.Clamp(cam.scrollX + (tx - cam.scrollX) * kMove, 0, W - VIEW_W / cam.zoom);
     cam.scrollY = Phaser.Math.Clamp(cam.scrollY + (ty - cam.scrollY) * kMove, 0, H - VIEW_H / cam.zoom);
@@ -157,6 +155,7 @@ class TunnelScene extends Phaser.Scene {
     // 井底不互通：三段之间无跨段步行，移动范围由边界钳制自然拦住
 
     if (!this.locked) this.handleInteract(jd);
+    this.patchRepair?.update(delta, !this.locked);
     this.syncLamp();
     this.syncLocalMarkers();
     this.updatePrompt();
@@ -183,7 +182,7 @@ class TunnelScene extends Phaser.Scene {
     let label = null, px = x, py = this.seg.groundY(x) - 250;
     if (this.local) {
       label = this.localPrompt();
-      px = this.local.kind === 'silt' ? seg.siltX : seg.patchX;
+      px = this.local.kind === 'silt' ? seg.siltX : this.patchRepair.target().x;
       py = this.seg.groundY(px) - 195;
     } else if (Math.abs(x - seg.shaftX) <= 150) {
       label = s.wells[seg.well].ladder ? 'E：沿梯返回地表' : 'E：查看井口（未布梯）';
@@ -195,7 +194,7 @@ class TunnelScene extends Phaser.Scene {
       label = s.lampOn ? 'E：进入清淤作业' : '油灯未点亮（F），看不清作业区';
       px = seg.siltX;
     } else if (seg.patchX && !s.uc.done && Math.abs(x - seg.patchX) <= 200) {
-      label = s.lampOn ? 'E：打开修渠工作台' : '油灯未点亮（F），看不清缺口';
+      label = s.lampOn ? 'E：就地修补缺口' : '油灯未点亮（F），看不清缺口';
       px = seg.patchX;
     } else if (seg.checkX && !s.verified && Math.abs(x - seg.checkX) <= 160) {
       label = s.lampOn ? 'E：照亮参照石，复查通水' : '油灯未点亮（F），看不到参照石';
@@ -218,10 +217,13 @@ class TunnelScene extends Phaser.Scene {
 
   // -------- 井筒 / 边缘 / 复查 --------
   tryAscend() { // §10：未布梯的井不能成为无条件逃生传送门
+    if (this.fading) return;
     if (G.state.wells[this.seg.well].ladder) {
       this.fading = true;
-      this.cameras.main.fadeOut(350, 0, 0, 0);
-      this.time.delayedCall(380, () => this.scene.start('Surface', { spawnWell: this.seg.well }));
+      this.cameras.main.fadeOut(200, 0, 0, 0);
+      KarezTransitions.play('ascend', () => {
+        this.time.delayedCall(0, () => this.scene.start('Surface', { spawnWell: this.seg.well }));
+      });
     } else {
       G.ui.dialogue.open(LINES.shaftClosed);
     }
@@ -243,6 +245,7 @@ class TunnelScene extends Phaser.Scene {
 
   tryVerify() { // §15：复查 = 清淤 AND 修补 都完成
     const s = G.state;
+    if (s.verified) return;
     if (!s.lampOn) { G.ui.toast.show('复查', '先用油灯照亮参照石（F）'); return; }
     if (!s.ub.done) { G.ui.dialogue.open(LINES.hintSilt); return; }
     if (!s.uc.done) { G.ui.dialogue.open(LINES.hintPatch); return; }
@@ -251,6 +254,7 @@ class TunnelScene extends Phaser.Scene {
       G.ui.toast.show('复查完成', '本段通水状态改善，写入维护记录');
       setGoal(this.goalText());
       SaveService.save();
+      KarezTransitions.play('water-restored');
     });
   }
 
@@ -259,24 +263,19 @@ class TunnelScene extends Phaser.Scene {
   // ============================================================
   tryEnterLocal(kind) {
     if (!G.state.lampOn) { G.ui.toast.show('作业区', '先点亮油灯（F）照清问题位置'); return; }
-    if (kind === 'patch') { this.openPatchWorkshop(); return; }
+    if (kind === 'patch') { this.beginPatchRepair(); return; }
     this.local = { kind };
-    const cx = this.seg.siltX;
     // 仅推近镜头，居中交给 update 里的相机驱动
     this.tweens.add({ targets: this.cameras.main, zoom: 1.25, duration: 420, ease: 'Cubic.inOut' });
   }
 
-  openPatchWorkshop() {
+  beginPatchRepair() {
+    if (this.segKey !== 'UC' || G.state.uc.done || !this.patchRepair) return;
     const open = () => {
-      if (!G.ui || !G.ui.openPatchRepair) return;
-      G.ui.openPatchRepair(() => {
-        G.state.uc.done = true;
-        this.cameras.main.flash(700, 120, 110, 90);
-        if (this.seg.bgFixed && this.textures.exists(this.seg.bgFixed)) this.bg.setTexture(this.seg.bgFixed);
-        G.ui.toast.show('修补完成', '缺口已稳住，水流可以继续通过');
-        setGoal(this.goalText());
-        SaveService.save();
-      });
+      this.local = { kind: 'patch' };
+      this.patchRepair.begin();
+      this.tweens.add({ targets: this.cameras.main, zoom: 1.25, duration: 420, ease: 'Cubic.inOut' });
+      setGoal(this.goalText());
     };
     if (!G.state.patchIntroSeen) {
       G.state.patchIntroSeen = true;
@@ -285,12 +284,26 @@ class TunnelScene extends Phaser.Scene {
     } else open();
   }
 
+  finishPatch() {
+    if (G.state.uc.done || this.patchRepair?.model.phase !== 'complete') return;
+    G.state.uc.done = true;
+    this.exitLocal();
+    this.patchRepair.dispose(); this.patchRepair = null;
+    G.state.uc.patch = null;
+    if (this.seg.bgFixed && this.textures.exists(this.seg.bgFixed)) this.bg.setTexture(this.seg.bgFixed);
+    this.cameras.main.flash(500, 90, 84, 60);
+    G.ui.toast.show('修补完成', '缺口已稳住，接下来到下游参照石复查通水');
+    setGoal(this.goalText()); SaveService.save();
+  }
+
   exitLocal() {
+    if (this.local?.kind === 'patch') this.patchRepair?.end();
     this.local = null;
     this.clearLocalMarkers();
     // 退出局部作业：镜头拉回标准视野（作业时推近到1.25×）
     this.tweens.add({ targets: this.cameras.main, zoom: ZOOM, duration: 380, ease: 'Cubic.inOut' });
     SaveService.save();
+    setGoal(this.goalText());
   }
 
   // ---- U-B 清淤目标（§13：S0两遍 → R1/R2任选先后 → R3被挡 → S1两遍） ----
@@ -299,9 +312,9 @@ class TunnelScene extends Phaser.Scene {
     const t = [];
     if (st.s0 < 2) t.push({ x: cx, kind: 'S0', label: `E：扫开表层松沙（${st.s0}/2）` });
     else {
-      if (!st.r1) t.push({ x: cx - 150, kind: 'R1', label: 'E：移开碎石 R1' });
-      if (!st.r2) t.push({ x: cx + 170, kind: 'R2', label: 'E：移开碎石 R2' });
-      if (!st.r3) t.push({ x: cx + 10, kind: 'R3', label: 'E：取出内侧碎石 R3' });
+      if (!st.r1) t.push({ x: cx - 150, kind: 'R1', label: 'E：移开左侧碎石' });
+      if (!st.r2) t.push({ x: cx + 170, kind: 'R2', label: 'E：移开右侧碎石' });
+      if (!st.r3) t.push({ x: cx + 10, kind: 'R3', label: 'E：取出内侧碎石' });
       if (st.r1 && st.r2 && st.r3 && st.s1 < 2) t.push({ x: cx, kind: 'S1', label: `E：清走残余淤积（${st.s1}/2）` });
     }
     return t;
@@ -309,6 +322,7 @@ class TunnelScene extends Phaser.Scene {
 
   localPrompt() {
     if (!G.state.lampOn) return '油灯未点亮（F），无法继续作业';
+    if (this.local?.kind === 'patch') return this.patchRepair.prompt();
     const ts = this.ubTargets();
     if (!ts.length) return '清淤完成，按 Esc 退出观察水路';
     return this.nearest(ts).label;
@@ -320,6 +334,7 @@ class TunnelScene extends Phaser.Scene {
 
   localE() { // 作业模式下的 E
     if (!G.state.lampOn) { G.ui.toast.show('作业暂停', '点亮油灯（F）后才能继续'); return; }
+    if (this.local?.kind === 'patch') { this.patchRepair.interact(); return; }
     const cx = this.seg.siltX;
     const gy = this.seg.groundY(cx);
     const ub = G.state.ub, ts = this.ubTargets();
@@ -330,7 +345,7 @@ class TunnelScene extends Phaser.Scene {
     else if (near.kind === 'S1') ub.s1++;
     else if (near.kind === 'R3' && !(ub.r1 && ub.r2)) { // §13：提前取出只轻晃并停住
       this.cameras.main.shake(120, 0.004);
-      G.ui.toast.show('取出失败', '内侧碎石被两侧挡住，先移开 R1 / R2');
+      G.ui.toast.show('取出失败', '内侧碎石被卡住了，先移开两侧的碎石');
       return;
     } else ub[near.kind.toLowerCase()] = true;
     if (ub.s0 >= 2 && ub.r1 && ub.r2 && ub.r3 && ub.s1 >= 2) this.finishSilt();
@@ -344,7 +359,10 @@ class TunnelScene extends Phaser.Scene {
     // §15：空间变化——U-B 作业区先变化（草稿用前后底图切换演示）
     this.cameras.main.flash(700, 120, 110, 90);
     this.time.delayedCall(500, () => this.bg.setTexture('MAP_UB'));
-    G.ui.dialogue.open(LINES.siltFixed, () => setGoal(this.goalText()));
+    G.ui.dialogue.open(LINES.siltFixed, () => {
+      setGoal(this.goalText());
+      KarezTransitions.play('silt-cleared');
+    });
     SaveService.save();
   }
 
@@ -354,7 +372,7 @@ class TunnelScene extends Phaser.Scene {
   }
 
   syncLocalMarkers() { // 作业模式内显示剩余目标的菱形标记
-    if (!this.local || this.locked) { if (this.localMarkers.length) this.clearLocalMarkers(); return; }
+    if (this.local?.kind !== 'silt' || this.locked) { if (this.localMarkers.length) this.clearLocalMarkers(); return; }
     const gy = this.seg.groundY(this.seg.siltX);
     const ts = this.ubTargets();
     while (this.localMarkers.length < ts.length) {

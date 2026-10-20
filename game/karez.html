@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
 <title>时间织城 · 第二关 坎儿井</title>
+<link rel="stylesheet" href="css/karez-transitions.css?v=1">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #0d0906; overflow: hidden; }
   #game { width: 100vw; height: 100vh; }
@@ -13,21 +14,36 @@
 </head>
 <body>
 <div id="game"></div>
+<div id="karez-transition" class="karez-transition" role="dialog" aria-modal="true" aria-labelledby="karez-transition-title" aria-describedby="karez-transition-caption" hidden>
+  <div class="karez-transition__frame">
+    <img class="karez-transition__art" alt="">
+    <div class="karez-transition__cast" aria-hidden="true"></div>
+    <div class="karez-transition__shade"></div>
+    <div class="karez-transition__caption">
+      <span class="karez-transition__chapter"></span>
+      <h2 id="karez-transition-title"></h2>
+      <p id="karez-transition-caption"></p>
+    </div>
+    <button type="button" class="karez-transition__skip">跳过 · 空格 / Enter / Esc</button>
+  </div>
+</div>
 <script src="shared/characters.js"></script>
 <script src="shared/campaign.js"></script>
-<script src="shared/chapter-bridge.js"></script>
+<script src="shared/chapter-bridge.js?v=4"></script>
 <script src="js/phaser.min.js"></script>
 <script src="js/UISkin.js?v=1"></script>
-<script src="js/HeroActor.js?v=1"></script>
-<script src="js/main.js?v=85"></script>
+<script src="js/HeroActor.js?v=2"></script>
+<script src="js/KarezTransitions.js?v=1"></script>
+<script src="js/KarezPatchRepair.js?v=1"></script>
+<script src="js/main.js?v=89"></script>
 <script src="js/LadderWorkshop.js?v=8"></script>
 <script src="js/LampForming.js?v=2"></script>
 <script src="js/LampAssemblyLayout.js?v=1"></script>
 <script src="js/LampFiring.js?v=1"></script>
 <script src="js/LampWorkshop.js?v=29"></script>
-<script src="js/ui.js?v=76"></script>
-<script src="js/SurfaceScene.js?v=59"></script>
-<script src="js/TunnelScene.js?v=66"></script>
-<script src="js/game.js?v=50"></script>
+<script src="js/ui.js?v=80"></script>
+<script src="js/SurfaceScene.js?v=62"></script>
+<script src="js/TunnelScene.js?v=70"></script>
+<script src="js/game.js?v=53"></script>
 </body>
 </html>

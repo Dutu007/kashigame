@@ -149,8 +149,10 @@ fs.mkdirSync(output, { recursive: true });
       assert.ok((await second.evaluate(() => game.scene.getScene('Surface').player.texture.key)).includes('walkLeft'));
       await page.keyboard.up('a');
       await page.keyboard.press('Space', { delay: 80 }); await page.waitForTimeout(150);
-      assert.equal(await second.evaluate(() => game.scene.getScene('Surface').onGround), false);
-      await page.waitForTimeout(850);
+      assert.equal(await second.evaluate(() => {
+        const p = game.scene.getScene('Surface').player;
+        return p.y - surfaceGroundY(p.x);
+      }), 0);
       // Exiting through the host must flush unsaved live workshop progress.
       await second.evaluate(st => {
         G.state = st;
@@ -189,13 +191,17 @@ fs.mkdirSync(output, { recursive: true });
       const lamp = await second.evaluate(() => { const s = game.scene.getScene('Tunnel'); return { hero: s.player.heroId, facing: s.player.facing, lamp: s.lampImg.texture.key, x: s.lampImg.x, playerX: s.player.x }; });
       assert.equal(lamp.hero, hero); assert.equal(lamp.facing, -1); assert.equal(lamp.lamp, 'LAMP_L'); assert.ok(lamp.x < lamp.playerX);
       await page.screenshot({ path: path.join(output, `karez-tunnel-${hero}.png`) });
-      await page.locator('#backToMenu').click(); await page.locator('#continueJourney').click();
+      await page.reload();
       second = await chapterFrame(page, 'karez.html'); await readyKarez(second, 'Tunnel');
       assert.equal(await second.evaluate(() => G.state.lastSeg), 'UA');
       assert.equal(await second.evaluate(() => game.scene.getScene('Tunnel').player.heroId), hero);
       await page.locator('iframe').click({ position: { x: 900, y: 400 } });
       await page.waitForTimeout(500); await page.keyboard.press('e', { delay: 80 });
       await readyKarez(second, 'Surface');
+      await page.locator('#backToMenu').click(); await page.locator('#continueJourney').click();
+      second = await chapterFrame(page, 'karez.html'); await readyKarez(second, 'Surface');
+      assert.equal(await second.evaluate(() => G.state.introDone || G.state.craftDone || G.state.undergroundVisited), false);
+      assert.equal(await second.evaluate(() => game.scene.getScene('Surface').player.heroId), hero);
       await second.evaluate(st => { G.state = st; game.scene.getScene('Surface').player.x = SURF.npcX + 80; }, karezStateAt(8));
       await page.waitForTimeout(450); await page.keyboard.press('e', { delay: 80 });
       await second.waitForFunction(() => G.ui.dialogue.isOpen);
@@ -203,14 +209,17 @@ fs.mkdirSync(output, { recursive: true });
       for (let i = 0; i < 10 && await second.evaluate(() => G.ui.dialogue.isOpen); i++) {
         await page.keyboard.press('e', { delay: 80 }); await page.waitForTimeout(240);
       }
-      await page.locator('#completion').waitFor({ state: 'visible' });
+      // Chapter two ends at the level list: no extra ending card keeps the player inside the game.
+      await page.locator('#menu').waitFor({ state: 'visible' });
       assert.equal(await page.evaluate(() => Campaign.snapshot().completed.karez), true);
-      await page.locator('#completionNext').click();
+      assert.equal(await page.locator('#play').isVisible(), false);
+      assert.equal(await page.locator('#completion').isVisible(), false);
+      assert.equal(new URL(page.url()).hash, '');
       assert.equal(await page.locator('#enterKarez').isDisabled(), false);
       assert.match(await page.locator('#karezStatus').innerText(), /已完成/);
       assert.deepEqual(errors, [], `JavaScript errors for ${hero}`);
       assert.deepEqual(missing, [], `Missing assets for ${hero}`);
-      console.log(`PASS ${hero}: locked routes, selection, dye/receipt exit and reload, no duplicate receipt, workshop checkpoint, chapter transitions, movement, keeper sprite and ground alignment, lamp facing, tunnel resume, both completions`);
+      console.log(`PASS ${hero}: locked routes, selection, dye/receipt exit and reload, workshop checkpoint, movement, keeper sprite, lamp facing, refresh resumes tunnel, re-entry starts fresh, both completions`);
       await context.close();
     }
   } catch (error) {
@@ -226,5 +235,5 @@ async function chapterFrame(page, match) {
   return frame;
 }
 async function readyKarez(frame, scene) {
-  await frame.waitForFunction(key => typeof game !== 'undefined' && game.scene?.isActive(key) && game.scene.getScene(key).player && typeof G !== 'undefined' && G.ui, scene, { timeout: 30000 });
+  await frame.waitForFunction(key => typeof game !== 'undefined' && game.scene?.isActive(key) && game.scene.getScene(key).player && typeof G !== 'undefined' && G.ui && !KarezTransitions.active, scene, { timeout: 30000 });
 }

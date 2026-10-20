@@ -8,6 +8,8 @@
 const W = 3072, H = 1024;
 const VIEW_W = 1920, VIEW_H = 1080;
 const ZOOM = VIEW_H / H;
+const PLAYER_MOVE_SPEED = 240;
+const CONTROL_HINT = 'A/D 移动 · E 互动';
 
 // UI 字体：优先使用微软雅黑；不同系统名称不同，保留中文名和 UI 变体作为回退。
 const FONT = '"Microsoft YaHei","微软雅黑","Microsoft YaHei UI",Arial,sans-serif';
@@ -19,6 +21,7 @@ const ASSET_V = 34;
 const G = {
   state: {
     introDone: false,
+    cutscenes: {}, // 已看过的转场；旧版存档可继续使用。
     ladderProblemFound: false,
     materials: { A: false, B: false, C: false },
     ladderWorkshopDone: false,
@@ -34,7 +37,7 @@ const G = {
     ],
     // U-B 清淤（§13）：s0表层松沙0-2、r1/r2碎石、r3内石、s1残余淤积0-2
     ub: { s0: 0, r1: false, r2: false, r3: false, s1: 0, done: false },
-    // U-C 修补（§14）：旧版 p/rot 保留兼容性；patch 保存独立工作台的中断进度。
+    // U-C 修补：旧版 p/rot 保留兼容性；patch 保存现场修补的中断进度。
     uc: { p: [null, null, null], rot: [0, 0, 0], patch: null, done: false },
     patchIntroSeen: false,  // §16 补口首入台词只播一次
     verified: false,        // T10 下游复查
@@ -45,7 +48,7 @@ const G = {
   },
   ui: null,
   goalText: '与守井人对话',
-  hint: 'A/D 移动 · 空格 跳跃 · E 互动',
+  hint: CONTROL_HINT,
   restored: false,
 };
 const matsCount = () => ['A', 'B', 'C'].filter(k => G.state.materials[k]).length;
@@ -56,7 +59,9 @@ function setHint(t) { G.hint = t; if (G.ui) G.ui.setHint(t); }
 // -------- 存档（§21 最小子集：里程碑提交 + localStorage） --------
 const SaveService = {
   KEY: 'twc_l2_save', VER: 4,
+  suspended: false,
   save() {
+    if (this.suspended) return;
     Campaign.write(this.KEY, { v: this.VER, s: G.state, goal: G.goalText });
   },
   load() {
@@ -112,7 +117,14 @@ const GROUND_U_POST = {
 // 清淤或修补完成后切换为对应的地面线。
 const groundUAt = (seg, x) => {
   const post = (seg === 'UC' && G.state.uc.done) || (seg === 'UB' && G.state.ub.done);
-  return lineAt(post ? GROUND_U_POST[seg] : GROUND_U_PRE[seg], x);
+  const y = lineAt(post ? GROUND_U_POST[seg] : GROUND_U_PRE[seg], x);
+  if (seg === 'UC' && !post && x >= 596 && x <= 981) {
+    const slots = G.state.uc.patch?.slots;
+    const placed = [0, 1, 2].filter(i => slots?.[i] === i).length;
+    const fill = [0, 0.63, 0.82, 1][placed]; // Match each stone layer's top surface.
+    return y + (lineAt(GROUND_U_POST.UC, x) - y) * fill;
+  }
+  return y;
 };
 
 // 地下三段配置：坐标以当前草稿美术实测锚定，括注方案§02/§04目标值
@@ -228,6 +240,7 @@ const LINES = {
 class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   preload() {
+    KarezTransitions.preload(['arrival', 'descend', 'ascend']);
     HeroActor.preload(this);
     loadUISkin(this);
     this.load.image('npc', 'assets/characters/keeper/keeper_idle.png?v=1');
@@ -260,7 +273,6 @@ class BootScene extends Phaser.Scene {
     this.load.image('MAP_UB', `map-assets/SCN_L2_UB.png?v=${ASSET_V}`);
     this.load.image('MAP_UB_SILT', `map-assets/SCN_L2_UB_SILT.png?v=${ASSET_V}`);
     this.load.image('MAP_UC', `map-assets/SCN_L2_UC.png?v=${ASSET_V}`);
-    this.load.image('MAP_UC_GAP', `map-assets/SCN_L2_UC_GAP.png?v=${ASSET_V}`);
     this.load.image('MAP_UC_FIXED', `map-assets/SCN_L2_UC_FIXED.png?v=${ASSET_V}`);
     this.load.image('UC_STONE_BASE', `map-assets/UC_STONE_BASE.png?v=${ASSET_V}`);
     this.load.image('UC_STONE_WEDGE', `map-assets/UC_STONE_WEDGE.png?v=${ASSET_V}`);
@@ -281,6 +293,10 @@ class BootScene extends Phaser.Scene {
     this.textures.get('LADDER_BAG').add('craft', 0, 118, 58, 1144, 1017);
     // 守井人原图 1024×1536；有效轮廓帧去除透明留白，使身高与靴底锚点准确。
     this.textures.get('npc').add('body', 0, 189, 95, 660, 1389);
+    // Stone outlines trimmed at runtime; original PNGs remain unchanged.
+    this.textures.get('UC_STONE_BASE').add('repair', 0, 69, 247, 1644, 461);
+    this.textures.get('UC_STONE_WEDGE').add('repair', 0, 127, 197, 1298, 637);
+    this.textures.get('UC_STONE_CAP').add('repair', 0, 55, 174, 2062, 374);
     this.makeTextures();
     if (G.restored && G.state.sceneId === 'Tunnel' && SEGMENTS[G.state.lastSeg]) {
       this.scene.start('Tunnel', { seg: G.state.lastSeg });

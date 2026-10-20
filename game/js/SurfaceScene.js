@@ -1,5 +1,5 @@
 // ============================================================
-// 地表场景（S）：移动/跳跃/交互 + 清井 + 寻物 + 制作 + 布梯下井
+// 地表场景（S）：移动/交互 + 清井 + 寻物 + 制作 + 布梯下井
 // 玩法对应 §05 任务流程 T01—T06、§07 玩法A、§08 玩法B、§09 制作
 // ============================================================
 
@@ -12,7 +12,7 @@ class SurfaceScene extends Phaser.Scene {
 
   create() {
     G.state.sceneId = 'Surface';
-    this.fading = false; this.vy = 0; this.onGround = true;
+    this.fading = false;
     this.lampImg = null; // 场景重启后旧引用已销毁
     const cam = this.cameras.main;
     cam.setBounds(0, 0, W, H).setZoom(ZOOM).fadeIn(350, 0, 0, 0);
@@ -28,7 +28,7 @@ class SurfaceScene extends Phaser.Scene {
       return img;
     });
 
-    // （布梯后不再显示绳梯贴图：布设即下井，转场画面由后续视频替代）
+    // 布梯后通过绳梯近景转入井底，不在地表重复绘制绳梯。
 
     // ---- 守井人使用透明立绘，按有效轮廓缩放并以靴底贴地 ----
     this.npc = this.add.image(SURF.npcX, surfaceGroundY(SURF.npcX), 'npc', 'body')
@@ -73,13 +73,17 @@ class SurfaceScene extends Phaser.Scene {
     this._lastLabel = null;
 
     // ---- 输入 ----
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E');
-    this.input.keyboard.addCapture('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,E');
+    this.keys = this.input.keyboard.addKeys('A,D,LEFT,RIGHT,E');
+    this.input.keyboard.addCapture('A,D,LEFT,RIGHT,E');
 
     if (!G.ui) this.scene.launch('UI');
+    const showArrival = !G.restored && !G.state.introDone && !KarezTransitions.hasSeen('arrival');
+    if (showArrival) KarezTransitions.play('arrival', () => {
+      G.ui?.toast.show('时间织城 · 第二关 坎儿井', '先去找守井人，了解小镇缺水的原因');
+    });
     this.time.delayedCall(400, () => {
-      setGoal(this.goalText()); setHint('A/D 移动 · 空格 跳跃 · E 互动');
-      if (!G.state.introDone && !this.spawnWell && G.ui) {
+      setGoal(this.goalText()); setHint(CONTROL_HINT);
+      if (!showArrival && !G.state.introDone && this.spawnWell == null && G.ui) {
         G.ui.toast.show('时间织城 · 第二关 坎儿井', '先去找守井人，了解小镇缺水的原因');
       }
     });
@@ -106,12 +110,12 @@ class SurfaceScene extends Phaser.Scene {
     if (!s.uc.done) return '下井修复下游暗渠的坍塌段';
     if (!s.verified) return '到下游暗渠复查通水';
     if (!s.recordSaved) return '回守井人处保存维护记录';
-    return '章节完成 · 可自由探索';
+    return '章节完成 · 返回关卡选择';
   }
 
   get locked() {
     const d = G.ui && G.ui.dialogue;
-    return this.fading || !!(G.ui && G.ui.modalOpen) || !!d && (d.isOpen || this.time.now - d.closedAt < 180);
+    return this.fading || KarezTransitions.active || !!(G.ui && G.ui.modalOpen) || !!d && (d.isOpen || this.time.now - d.closedAt < 180);
   }
 
   update(time, delta) {
@@ -120,7 +124,7 @@ class SurfaceScene extends Phaser.Scene {
     const p = this.player;
     const previousX = p.x;
     let direction = 0;
-    const moveSpeed = 220;
+    const moveSpeed = PLAYER_MOVE_SPEED;
 
     if (!this.locked) {
       let dir = 0;
@@ -130,18 +134,11 @@ class SurfaceScene extends Phaser.Scene {
         p.x = Phaser.Math.Clamp(p.x + dir * moveSpeed * dt, 60, W - 60);
         direction = dir;
       }
-      if (this.onGround && jd(k.SPACE)) { this.vy = -780; this.onGround = false; } // 跳跃仅空格
     }
 
-    if (!this.onGround) { this.vy += 1900 * dt; p.y += this.vy * dt; }
-    const gy = surfaceGroundY(p.x);
-    if (this.onGround) {
-      p.y = gy; // 贴地行走：y 跟随地形折线
-    } else if (p.y >= gy && this.vy >= 0) {
-      p.y = gy; this.vy = 0; this.onGround = true;
-    }
+    p.y = surfaceGroundY(p.x); // 行走始终贴合地形折线。
 
-    HeroActor.update(p, direction, p.x !== previousX, this.onGround, moveSpeed);
+    HeroActor.update(p, direction, p.x !== previousX, moveSpeed);
 
     // 相机手动平滑跟随（水平为主，垂直整幅可见无需滚动）
     const cam = this.cameras.main;
@@ -261,7 +258,7 @@ class SurfaceScene extends Phaser.Scene {
     } else if (st.ladder) {
       this.descend(i);
     } else if (this.canDescendWell(i)) {
-      // 布设即下井：不做动画与绳梯贴图，转场画面后续由视频替代
+      // 布设即下井：先提交井口和库存，再播放沿梯下井的转场。
       st.ladder = true; s.laddersLeft--;
       this.descend(i);
     } else {
@@ -328,7 +325,8 @@ class SurfaceScene extends Phaser.Scene {
           G.ui.toast.show('章节完成', '本段维护记录已保存');
           setGoal(this.goalText());
           SaveService.save();
-          ChapterBridge.complete('karez');
+          Campaign.complete('karez');
+          KarezTransitions.play('maintenance-record', () => ChapterBridge.complete('karez'));
         });
       }
     } else if (s.recordSaved) {
@@ -342,12 +340,15 @@ class SurfaceScene extends Phaser.Scene {
     }
   }
 
-  descend(i) { // §10 固定转场：0.35s淡出 → 切场景 → 0.35s淡入
+  descend(i) {
+    if (this.fading) return;
     // 首次布梯和重复沿梯下井都更新刷新后的返回位置。
     G.state.lastWell = i;
     SaveService.save();
     this.fading = true;
-    this.cameras.main.fadeOut(350, 0, 0, 0);
-    this.time.delayedCall(380, () => this.scene.start('Tunnel', { seg: ['UA', 'UB', 'UC'][i] }));
+    this.cameras.main.fadeOut(200, 0, 0, 0);
+    KarezTransitions.play('descend', () => {
+      this.time.delayedCall(0, () => this.scene.start('Tunnel', { seg: ['UA', 'UB', 'UC'][i] }));
+    });
   }
 }
