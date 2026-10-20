@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>清理织梦巷存档</title>
+<style>body{font:18px/1.8 system-ui;max-width:640px;margin:12vh auto;padding:24px;background:#f8f3e8;color:#44352b}a{color:#80532c}</style>
+<h1>清理织梦巷存档</h1>
+<p id="status">正在清理当前浏览器的织梦巷缓存……</p>
+<p>请先关闭其他正在运行织梦巷的游戏页面，避免自动保存重新写入旧进度。</p>
+<a href="/">返回游戏首页</a>
+<script>
+(() => {
+  const status = document.getElementById('status');
+  try {
+    const key = 'twc_campaign_v1';
+    const raw = localStorage.getItem(key);
+    const campaign = raw ? JSON.parse(raw) : null;
+    if (campaign && typeof campaign === 'object') {
+      if (campaign.started) campaign.started.weave = false;
+      if (campaign.completed) campaign.completed.weave = false;
+      localStorage.setItem(key, JSON.stringify(campaign));
+    }
+    const keys = ['twc_l1_save', 'weavelane.draft.v1', 'weavelane.works.v1', 'weavelane.settings.v1'];
+    keys.forEach(key => localStorage.removeItem(key));
+    if (keys.some(key => localStorage.getItem(key) !== null)) throw new Error('清理验证失败');
+    status.textContent = '织梦巷的进度、染谱草稿、作品和设置缓存已清除。重新进入游戏即可从头开始，其他关卡存档和角色选择已保留。';
+  } catch (error) {
+    status.textContent = '清理未完成：' + error.message;
+  }
+})();
+</script>
+</html>

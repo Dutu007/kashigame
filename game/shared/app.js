@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const query = new URLSearchParams(location.search);
   const fromMap = query.get('entry') === 'map';
+  document.body.classList.toggle('from-map', fromMap);
   const canEnter = id => Campaign.canEnter(id) || (fromMap && (id === 'weave' || id === 'karez'));
   if (fromMap && ['aide', 'aysu'].includes(query.get('hero'))) Campaign.chooseCharacter(query.get('hero'));
   const chapters = {

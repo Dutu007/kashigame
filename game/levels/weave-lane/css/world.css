@@ -1,5 +1,8 @@
 /* 场景画面：画板、角色、NPC、提示、转场 */
-    .board{position:relative;width:min(100vw,177.6833vh);width:min(100vw,177.6833dvh);aspect-ratio:1672/941;overflow:hidden;background:#292929}
+    /* Fill the host viewport. The scene keeps its 16:9 design ratio and is
+       allowed to crop at the edges on wider/taller screens so no letterbox
+       bars are shown around the game. */
+    .board{position:relative;width:max(100vw,177.6833vh);width:max(100vw,177.6833dvh);aspect-ratio:1672/941;overflow:hidden;background:#292929}
     .board img,.board svg{position:absolute;inset:0;width:100%;height:100%}
     .board img{object-fit:contain}.board svg{pointer-events:none}
     #background{z-index:1}

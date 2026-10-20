@@ -25,7 +25,9 @@ window.ChapterBridge = { resume: startWhenReady, save() {}, pause() {} };
    舞台自适应
    ======================================== */
 function fitStage() {
-  const scale = Math.min(
+  // Cover the viewport so the transition has no side/top letterbox bars.
+  // The fixed design stage is intentionally cropped at the overflowing edge.
+  const scale = Math.max(
     window.innerWidth / DESIGN_W,
     window.innerHeight / DESIGN_H
   );

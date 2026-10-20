@@ -324,9 +324,10 @@ class UIScene extends Phaser.Scene {
     this.toast = new Toast(this);
     this.workshop = new WorkshopModal(this);
 
-    // 目标追踪（左上羊皮纸签：宽度随文本自适应，避免溢出）
-    this.trackerPanel = skinFrame(this, 'goal', 24, 12, 640, 100, { cuts: [0.26, 0.12, 0.3, 0.3] }).setDepth(310);
-    this.trackerT = this.add.text(132, 62, '', {
+    // 目标追踪：位于顶部返回按钮右侧，保留按钮与目标框之间的间距。
+    const trackerLeft = 132, trackerTop = 12;
+    this.trackerPanel = skinFrame(this, 'goal', trackerLeft, trackerTop, 640, 100, { cuts: [0.26, 0.12, 0.3, 0.3] }).setDepth(310);
+    this.trackerT = this.add.text(trackerLeft + 108, trackerTop + 50, '', {
       fontFamily: FONT, fontSize: '25px', color: UI_COLORS.cream, resolution: 2,
     }).setOrigin(0, 0.5).setDepth(311);
 

@@ -14,7 +14,9 @@
 }
 .karez-transition[data-phase='closing'] { opacity: 0; }
 .karez-transition__frame {
-  width: min(100vw, calc(100vh * 16 / 9));
+  /* Cover the viewport and crop the excess edge so transition cards do not
+     introduce letterbox bars on non-16:9 displays. */
+  width: max(100vw, calc(100vh * 16 / 9));
   aspect-ratio: 16 / 9;
   position: relative;
   overflow: hidden;

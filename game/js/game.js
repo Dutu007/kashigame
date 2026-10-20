@@ -6,7 +6,9 @@ const game = new Phaser.Game({
   height: VIEW_H,
   backgroundColor: '#0d0906',
   render: { roundPixels: true },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    // ENVELOP scales the fixed 16:9 game surface to cover the viewport;
+    // excess edges are cropped instead of rendering black/green letterbox bars.
+    scale: { mode: Phaser.Scale.ENVELOP, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, SurfaceScene, TunnelScene, UIScene],
 });
 Campaign.enter('karez');

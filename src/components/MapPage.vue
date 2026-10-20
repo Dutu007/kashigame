@@ -115,7 +115,7 @@ onBeforeUnmount(() => {
     </Teleport>
     <p v-if="!activeGame && !selectedLevel" class="map-pan-hint" aria-hidden="true">左右滑动 · 探索古城街巷</p>
     <section v-if="activeGame" class="game-overlay" :class="{ 'is-preparing': isGameLoading && !gameRevealed && activeGame.id === 'weave' }" :inert="isGameLoading ? true : undefined" :aria-label="activeGame.title">
-      <header class="game-header"><button type="button" @click="closeGame">‹ 返回小镇地图</button><h1>{{ activeGame.title }}</h1></header>
+      <header class="game-header"><button type="button" aria-label="返回小镇地图" title="返回小镇地图" @click="closeGame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg></button><h1 class="sr-only">{{ activeGame.title }}</h1></header>
       <iframe ref="gameFrame" :src="activeGame.url" :title="activeGame.title" allow="autoplay; fullscreen" />
     </section>
     <component :is="activeGame?.id === 'weave' ? WeaveTransition : GameLoading" v-if="isGameLoading" class="chapter-loading" :destination="activeGame.title" :ready="gameReady" @reveal="gameRevealed = true" @complete="finishGameLoading" />
@@ -131,9 +131,17 @@ onBeforeUnmount(() => {
           </header>
           <img class="scenery-art" :src="scenicChapters[selectedLevel.id].image" :alt="selectedLevel.title + '风景插画'" />
           <div class="scenery-copy">
+            <div class="preview-emblem preview-emblem--line" aria-hidden="true"></div>
             <p class="preview-theme">{{ scenicChapters[selectedLevel.id].caption }}</p>
-            <p id="preview-detail" class="preview-caption">{{ scenicChapters[selectedLevel.id].description }}</p>
-            <p class="scenery-status">玩法尚未开放 · 先欣赏这里的风景</p>
+            <div class="preview-rule" aria-hidden="true"><span></span></div>
+            <div class="preview-detail-card">
+              <span class="preview-detail-label">风物札记</span>
+              <p id="preview-detail" class="preview-caption">{{ scenicChapters[selectedLevel.id].description }}</p>
+            </div>
+            <div class="preview-tags" aria-label="关卡主题">
+              <span v-for="tag in scenicChapters[selectedLevel.id].tags" :key="tag">{{ tag }}</span>
+            </div>
+            <p class="scenery-status"><i aria-hidden="true"></i>玩法尚未开放 · 先欣赏这里的风景</p>
           </div>
         </section>
       </div>
@@ -148,9 +156,12 @@ onBeforeUnmount(() => {
 .map-notice-enter-from, .map-notice-leave-to { opacity: 0; }
 .game-overlay { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #21170f; }
 .game-overlay.is-preparing { visibility: hidden; }
-.game-header { display: flex; align-items: center; gap: 20px; padding: 8px 16px; color: #f9e5bc; background: #342519; }
+.game-header { position: absolute; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); z-index: 2; display: flex; align-items: center; color: #f9e5bc; }
 .game-header h1 { margin: 0; font: 700 18px/1.4 serif; }
-.game-header button { padding: 8px 14px; border: 1px solid #b98a4d; border-radius: 6px; color: #f9e5bc; background: #503722; cursor: pointer; }
+.game-header button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid #b98a4d; border-radius: 50%; color: #f9e5bc; background: #503722cc; backdrop-filter: blur(8px); cursor: pointer; }
+.game-header button svg { width: 22px; height: 22px; }
+.game-header button:hover { background: #684a2ee6; }
+.game-header button:focus-visible { outline: 2px solid #f9e5bc; outline-offset: 3px; }
 .game-overlay iframe { flex: 1; width: 100%; min-height: 0; border: 0; }
 .map-page { position: relative; display: grid; place-items: center; width: 100vw; height: 100dvh; overflow: auto; background: #d8b685; isolation: isolate; }
 /* Show every district on desktop; keep signs readable with horizontal panning on phones. */
@@ -244,11 +255,35 @@ onBeforeUnmount(() => {
 .preview-theme { font-size: 19px; color: #a33c32; letter-spacing: 0; }
 .preview-caption { max-width: 800px; margin: 10px auto 0; color: #64452f; font-size: 15px; line-height: 1.8; }
 .scenery-status { margin: 14px 0 0; text-align: center; color: #887153; font: 12px/1.6 'Songti SC', serif; }
+.scenery-copy { position: relative; padding-top: 8px; overflow: hidden; background: radial-gradient(ellipse at 50% 0%, #fffaf0, transparent 68%); }
+.scenery-copy::before, .scenery-copy::after { content: ''; position: absolute; top: 25px; width: 25%; height: 1px; background: linear-gradient(90deg, transparent, #c79d5b); opacity: .72; pointer-events: none; }
+.scenery-copy::before { left: 0; }
+.scenery-copy::after { right: 0; transform: rotate(180deg); }
+.preview-emblem { position: relative; display: grid; place-items: center; width: 70px; height: 70px; margin: 0 auto 8px; color: #a2673d; border: 1px solid #c9a268; border-radius: 50% 50% 22% 22%; background: radial-gradient(circle at 50% 28%, #fffdf4, #ecd29a55); box-shadow: 0 4px 15px #9d73302b, inset 0 0 0 4px #fff8e4; }
+.preview-emblem::before, .preview-emblem::after { content: ''; position: absolute; top: 50%; width: 30px; height: 1px; background: #c49a5e; }
+.preview-emblem::before { right: calc(100% + 10px); }
+.preview-emblem::after { left: calc(100% + 10px); }
+.preview-emblem svg { width: 48px; height: 48px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; animation: motif-float 4s ease-in-out infinite; }
+.preview-emblem--line { width: 100%; height: 14px; margin: 0 auto 8px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.preview-emblem--line::before, .preview-emblem--line::after { width: 25%; }
+.preview-emblem--line::before { right: auto; left: 0; }
+.preview-emblem--line::after { left: auto; right: 0; }
+.preview-rule { display: flex; align-items: center; justify-content: center; height: 14px; margin: 2px 0; }
+.preview-rule::before, .preview-rule::after { content: ''; width: 76px; height: 1px; background: linear-gradient(90deg, transparent, #c69a5d); }
+.preview-rule::after { transform: rotate(180deg); }
+.preview-rule span { width: 7px; height: 7px; margin: 0 9px; border: 1px solid #b98449; transform: rotate(45deg); }
+.preview-detail-card { max-width: 760px; margin: 0 auto; padding: 14px 24px 13px; border: 1px solid #d9bb84; border-radius: 5px 16px 5px 16px; background: #fff8e9b8; box-shadow: inset 0 0 0 3px #fffdf480; }
+.preview-detail-label { display: block; margin-bottom: 4px; color: #a36c3f; font: 700 11px/1.4 'Songti SC', serif; letter-spacing: .2em; text-align: center; }
+.preview-tags { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.preview-tags span { padding: 3px 10px 4px; border: 1px solid #d2ae70; border-radius: 999px; color: #8d6742; background: #fffaf0; font: 11px/1.3 'Songti SC', serif; }
+.scenery-status { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 15px; }
+.scenery-status i { width: 5px; height: 5px; border-radius: 50%; background: #be8d4f; box-shadow: 0 0 0 3px #be8d4f22; }
 @media (max-width: 600px) {
 
   .level-preview { padding: 0; }
   .preview-header { padding: 12px 16px; }
-  .scenery-copy { padding: 14px 18px 20px; }
+  .scenery-copy { padding: 8px 18px 20px; }
+  .preview-detail-card { padding: 12px 15px; }
   .preview-theme { font-size: 17px; }
 }
 
