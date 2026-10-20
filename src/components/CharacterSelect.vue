@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import characterBackgroundUrl from '../../角色选择背景图.png'
-import journeyButtonUrl from '../assets/processed/start-journey-button-transparent.png'
-import maleCharacterUrl from '../assets/processed/male-character-transparent-v2.png'
-import femaleCharacterUrl from '../assets/processed/female-character-transparent-v2.png'
+import characterBackgroundUrl from '../assets/characters/background.png'
+import journeyButtonUrl from '../assets/characters/journey-button.png'
+import maleCharacterUrl from '../assets/characters/male.png'
+import femaleCharacterUrl from '../assets/characters/female.png'
 import KashgarPlaque from './KashgarPlaque.vue'
 import audioManager from '../utils/audioManager'
 

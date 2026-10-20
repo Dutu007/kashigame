@@ -3,10 +3,10 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { deflateSync, inflateSync } from 'node:zlib'
 
-const root = resolve(import.meta.dirname, '..')
+const root = resolve(import.meta.dirname, '../..')
 const targets = [
-  ['女性角色.png', 'src/assets/processed/female-character-transparent.png'],
-  ['开始旅程-角色选择.png', 'src/assets/processed/start-journey-button-transparent.png'],
+  ['docs/art/character-sources/female.png', 'output/legacy-assets/female-character-transparent.png'],
+  ['docs/art/ui-sources/journey-button.png', 'output/legacy-assets/start-journey-button-transparent.png'],
 ]
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])

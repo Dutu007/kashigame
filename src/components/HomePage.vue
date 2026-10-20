@@ -1,8 +1,8 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import Phaser from 'phaser'
-import fallbackImageUrl from '../../assets/home/home-video-poster.png'
-import homeVideoUrl from '../../首页素材1.mp4'
+import fallbackImageUrl from '../assets/home/poster.png'
+import homeVideoUrl from '../assets/home/background-loop.mp4'
 import GameConfig from '../game/GameConfig'
 import audioManager from '../utils/audioManager'
 import GameGuideModal from './home/GameGuideModal.vue'

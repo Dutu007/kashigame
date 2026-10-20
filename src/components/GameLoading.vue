@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import loadingBackgroundUrl from '../../首页加载.png'
-import textureUrl from '../../加载动画所用材质.png'
+import loadingBackgroundUrl from '../assets/loading/background.png'
 
 const props = defineProps({
   destination: { type: String, default: '喀什小镇' },
@@ -108,7 +107,7 @@ onBeforeUnmount(() => {
 .loading-panel h1 { margin: 0 0 clamp(15px, 2vh, 20px); font: 600 clamp(20px, 1.8vw, 32px)/1.2 Georgia, 'Songti SC', serif; letter-spacing: .08em; text-shadow: 0 1px 1px rgba(255,245,218,.8); }
 .title-dots { display: inline-block; width: 1.6em; text-align: left; }
 .loading-track { position: relative; width: clamp(300px, 30vw, 620px); height: clamp(18px, 2.3vh, 24px); margin: 0 auto; overflow: hidden; border: 2px solid #73401e; border-radius: 999px; background: rgba(114, 65, 32, .14); box-shadow: inset 0 2px 5px rgba(75, 36, 13, .28), 0 1px 0 rgba(255,255,255,.7); }
-.loading-fill { position: relative; height: 100%; min-width: 0; overflow: hidden; border-radius: inherit; background-image: url('../../加载动画所用材质.png'); background-repeat: repeat-x; background-size: auto 100%; animation: texture-flow 1.6s ease-in-out infinite; transition: width 80ms linear; }
+.loading-fill { position: relative; height: 100%; min-width: 0; overflow: hidden; border-radius: inherit; background-image: url('../assets/loading/texture.png'); background-repeat: repeat-x; background-size: auto 100%; animation: texture-flow 1.6s ease-in-out infinite; transition: width 80ms linear; }
 .loading-sheen { position: absolute; inset: 0; width: 38%; background: linear-gradient(105deg, transparent, rgba(255,246,205,.35), transparent); animation: sheen 2.8s ease-in-out infinite; }
 .loading-percent { margin-top: 10px; font: 700 clamp(18px, 1.65vw, 28px)/1.1 Georgia, 'Songti SC', serif; letter-spacing: .08em; }
 .loading-message { min-height: 1.5em; margin: 9px 0 0; font: 500 clamp(14px, 1.08vw, 20px)/1.4 'Songti SC', 'STSong', serif; letter-spacing: .08em; transition: opacity 250ms ease; }

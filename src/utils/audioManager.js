@@ -1,4 +1,4 @@
-import musicUrl from '../../视频背景音乐.mp3'
+import musicUrl from '../assets/audio/background.mp3'
 
 const DEFAULT_VOLUME = 0.24
 const FADE_IN_DURATION = 1500

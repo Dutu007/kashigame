@@ -1,5 +1,6 @@
 # 本地调试产物与临时浏览器数据
 /output/
+/artifacts/
 /tmp/
 /rubbish/
 __pycache__/

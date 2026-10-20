@@ -1,8 +1,7 @@
-import cityUrl from '../assets/kashgar-city-chapters-v4.png'
-import originalUrl from '../assets/kashgar-five-chapters-sparse.png'
+import cityUrl from '../assets/map/town.png'
 
 // One normalized coordinate space for art, masks, effects and pointer regions.
-export const mapArt = { cityUrl, originalUrl, width: 1671, height: 941 }
+export const mapArt = { cityUrl, width: 1671, height: 941 }
 // Preserve original pixels inside both established chapters; feather only their perimeter.
 export const protectedRegions = [
   '0,43 5,40 12,36 20,37 26,44 29,53 32,58 38,64 41,77 39,83 29,89 13,88 0,82',

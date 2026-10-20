@@ -1,13 +1,13 @@
 """Prepare reference skins with empty areas for live game canvases.
 
-Usage: python scripts/prepare-weave-reference-ui.py SOURCE_DIRECTORY
+Usage: python scripts/assets/prepare-weave-reference-ui.py SOURCE_DIRECTORY
 """
 from pathlib import Path
 import sys
 from PIL import Image, ImageDraw, ImageFilter
 
 source = Path(sys.argv[1])
-output = Path(__file__).resolve().parents[1] / 'game/levels/weave-lane/assets/ui/workshop'
+output = Path(__file__).resolve().parents[2] / 'game/levels/weave-lane/assets/ui/workshop'
 output.mkdir(parents=True, exist_ok=True)
 
 

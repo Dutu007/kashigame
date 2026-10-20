@@ -1,6 +1,6 @@
-import bazaar from '../assets/scenery-bazaar.png'
-import pottery from '../assets/scenery-pottery.png'
-import music from '../assets/scenery-music.png'
+import bazaar from '../assets/scenery/bazaar.png'
+import pottery from '../assets/scenery/pottery.png'
+import music from '../assets/scenery/music.png'
 
 export const scenicChapters = {
   3: { image: bazaar, caption: '巴扎烟火 · 丝路相逢', description: '彩棚投下斑斓的光影，香料、瓜果与铜器铺满街巷。巴扎是相聚与交换的地方，也把喀什的日常生活织进了丝路故事。' },

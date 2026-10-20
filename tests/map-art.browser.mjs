@@ -1,16 +1,18 @@
-// Run with PLAYWRIGHT_MODULE pointing to an installed Playwright ESM entry.
+// Use NODE_PATH or PLAYWRIGHT_MODULE to locate an installed Playwright package.
 import { mkdir, writeFile } from 'node:fs/promises'
 import assert from 'node:assert/strict'
 import { fileURLToPath } from 'node:url'
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright')
+const browser = await chromium.launch({ headless: true, channel: process.env.CHROMIUM_PATH ? undefined : 'chrome', executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 const page = await browser.newPage({ viewport: { width: 1440, height: 810 } })
 const errors = []
 page.on('pageerror', error => errors.push(error.message))
 const out = fileURLToPath(new URL('../output/map-v3/', import.meta.url))
 await mkdir(out, { recursive: true })
 try {
-  await page.goto(process.env.MAP_URL || 'http://127.0.0.1:5175/')
+  await page.goto(process.env.MAP_URL || 'http://localhost:4173/')
   await page.getByRole('button', { name: '开始探索', exact: true }).click()
   await page.getByRole('button', { name: '开始旅程', exact: true }).click()
   await page.locator('.city-artwork').waitFor({ timeout: 20000 })
@@ -57,6 +59,10 @@ try {
     await page.setViewportSize(size)
     const box = await page.locator('.city-artwork').boundingBox()
     assert.ok(Math.abs(box.width/box.height - 1671/941)<.002)
+    if (size.width > 600) {
+      assert.ok(box.x >= -1 && box.x + box.width <= size.width + 1, 'Desktop shows the complete map');
+      assert.ok(box.y >= -1 && box.y + box.height <= size.height + 1, 'Desktop map fits its viewport');
+    } else assert.ok(box.width >= 900, 'Phone map remains large enough to read');
     for (let id=1; id<=5; id++) {
       await page.locator('#level-'+id).focus()
       await page.locator('#level-'+id).scrollIntoViewIfNeeded()

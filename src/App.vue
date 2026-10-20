@@ -5,12 +5,12 @@ import CharacterSelect from './components/CharacterSelect.vue'
 import GameLoading from './components/GameLoading.vue'
 import MapPage from './components/MapPage.vue'
 import { mapArt } from './data/mapVisuals'
-import maleCharacterUrl from './assets/processed/male-character-transparent-v2.png'
-import femaleCharacterUrl from './assets/processed/female-character-transparent-v2.png'
-import journeyButtonUrl from './assets/processed/start-journey-button-transparent.png'
-import loadingBackgroundUrl from '../首页加载.png'
-import loadingTextureUrl from '../加载动画所用材质.png'
-import characterBackgroundUrl from '../角色选择背景图.png'
+import maleCharacterUrl from './assets/characters/male.png'
+import femaleCharacterUrl from './assets/characters/female.png'
+import journeyButtonUrl from './assets/characters/journey-button.png'
+import loadingBackgroundUrl from './assets/loading/background.png'
+import loadingTextureUrl from './assets/loading/texture.png'
+import characterBackgroundUrl from './assets/characters/background.png'
 
 const view = ref('home')
 

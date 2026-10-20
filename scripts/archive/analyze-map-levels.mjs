@@ -2,10 +2,12 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { deflateSync, inflateSync } from 'node:zlib'
 
-const root = resolve(import.meta.dirname, '..')
+const root = resolve(import.meta.dirname, '../..')
+const sourceDir = process.argv[2]
+if (!sourceDir) throw new Error('Archived tool: provide the complete old ten-region artwork directory. The current map uses src/data/mapVisuals.js.')
 const baseName = '地图.png'
-const outputDir = resolve(root, 'src/assets/map-overlays')
-const positionsPath = resolve(root, 'src/data/levelPositions.json')
+const outputDir = resolve(root, 'output/legacy-map-overlays')
+const positionsPath = resolve(outputDir, 'positions.json')
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 const levels = Array.from({ length: 10 }, (_, index) => index + 1)
 
@@ -173,13 +175,13 @@ function buildOverlay(source, box, position, base) {
   return rgba
 }
 
-const base = decodeRgbPng(await readFile(resolve(root, baseName)))
-const mapLevelsSource = await readFile(resolve(root, 'src/data/mapLevels.js'), 'utf8')
+const base = decodeRgbPng(await readFile(resolve(sourceDir, baseName)))
+const mapLevelsSource = await readFile(resolve(root, 'docs/art/legacy/map-levels-v1.js'), 'utf8')
 const seeds = Object.fromEntries([...mapLevelsSource.matchAll(/\{ id: (\d+).*?x: ([\d.]+), y: ([\d.]+)/g)].map((match) => [Number(match[1]), { x: Number(match[2]) / 100, y: Number(match[3]) / 100 }]))
 const positions = {}
 await mkdir(outputDir, { recursive: true })
 for (const id of levels) {
-  const source = decodeRgbPng(await readFile(resolve(root, `地图关卡${id}.png`)))
+  const source = decodeRgbPng(await readFile(resolve(sourceDir, `地图关卡${id}.png`)))
   const box = foregroundBox(source)
   const match = matchTemplate(base, source, box, seeds[id])
   const seedCenter = { x: seeds[id].x * base.width, y: seeds[id].y * base.height }

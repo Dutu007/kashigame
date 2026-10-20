@@ -1,11 +1,11 @@
 <script setup>
 import { nextTick, onMounted, ref } from 'vue'
-import notice1 from '../../../首页公告1.png'
-import notice2 from '../../../首页公告2.png'
-import notice3 from '../../../首页公告3.png'
-import mapNoticeContent from '../../assets/map-notice-five-chapters.png'
-import notice4 from '../../../首页公告4.png'
-import notice5 from '../../../首页公告5.png'
+import notice1 from '../../assets/guide/intro.png'
+import notice2 from '../../assets/guide/how-to-play.png'
+import notice3 from '../../assets/guide/map-frame.png'
+import mapNoticeContent from '../../assets/guide/map-districts.png'
+import notice4 from '../../assets/guide/culture.png'
+import notice5 from '../../assets/guide/controls.png'
 import ActiveTabDecoration from './ActiveTabDecoration.vue'
 
 const emit = defineEmits(['close'])
