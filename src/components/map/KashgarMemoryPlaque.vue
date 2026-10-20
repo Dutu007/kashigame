@@ -3,19 +3,19 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { memoryPlaques } from '../../data/memoryPlaques'
 import bazaarChapterPanel from '../../assets/map/bazaar-chapter-panel.png'
 import karezChapterPanel from '../../assets/map/karez-chapter-panel.png'
-import mukamChapterPanel from '../../assets/map/mukam-chapter-panel.png'
 import potteryChapterPanel from '../../assets/map/pottery-chapter-panel.png'
 import weaveChapterPanel from '../../assets/map/weave-chapter-panel.png'
 const props = defineProps({ level: Object })
 const card = ref(null)
 const position = ref({ left: '0px', top: '0px', visibility: 'hidden' })
 const theme = computed(() => memoryPlaques[props.level.id])
+// Only districts with committed chapter-panel art use the image plaque.
+// 木卡姆庭院 has no panel artwork yet, so it keeps the designed text plaque below.
 const panelArt = computed(() => ({
   1: weaveChapterPanel,
   2: karezChapterPanel,
   3: bazaarChapterPanel,
   4: potteryChapterPanel,
-  5: mukamChapterPanel,
 }[props.level.id]))
 const numbers = ['一', '二', '三', '四', '五']
 let observer, frame

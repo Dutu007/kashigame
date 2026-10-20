@@ -28,7 +28,8 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     await child.waitForFunction(() => typeof state !== 'undefined' && typeof LevelOneProgress !== 'undefined');
     assert.equal(await child.evaluate(() => state.character), 'aide');
     await child.evaluate(() => { state.quest = true; LevelOneProgress.save(); });
-    await page.getByRole('button', { name: '‹ 关卡目录', exact: true }).click();
+    // The map entry hides the game bar, so the chapter leaves through the same handler.
+    await page.evaluate(() => document.getElementById('backToMenu').click());
     await page.goto(base);
     await page.locator('#enterWeave').click();
     await intro.locator('#board').waitFor({ timeout: 20000 });
@@ -43,7 +44,7 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     await earlyExit.goto(base);
     await earlyExit.locator('#enterWeave').click();
     await earlyExit.frameLocator('#chapterMount iframe').locator('#stage.play').waitFor();
-    await earlyExit.getByRole('button', { name: '‹ 关卡目录', exact: true }).click();
+    await earlyExit.evaluate(() => document.getElementById('backToMenu').click());
     assert.equal(await earlyExit.locator('#chapterMount iframe').count(), 0);
     await earlyExit.close();
     assert.deepEqual(errors, []);

@@ -93,13 +93,13 @@ async function finishKarez(child, page) {
       assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Map selection must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await child.evaluate(() => { state.quest = true; LevelOneProgress.save(); });
-      await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
+      await page.getByRole('button', { name: '返回小镇地图', exact: true }).click();
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('twc_l1_save')).state.quest), true);
       ({ child } = await enterChapter(page, 1, 'levels/weave-lane/'));
       assert.equal(await child.evaluate(() => state.quest), true);
       assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Reopening must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
-      await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
+      await page.getByRole('button', { name: '返回小镇地图', exact: true }).click();
 
       ({ host, child } = await enterChapter(page, 2, 'karez.html'));
       await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player
@@ -122,7 +122,7 @@ async function finishKarez(child, page) {
       ({ child } = await enterChapter(page, 2, 'karez.html'));
       await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player);
       assert.equal(await child.evaluate(() => G.state.recordSaved), false);
-      await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
+      await page.getByRole('button', { name: '返回小镇地图', exact: true }).click();
       assert.deepEqual(errors, [], `JavaScript errors for ${selection}`);
       assert.deepEqual(missing, [], `Missing production assets for ${selection}`);
       console.log(`PASS ${selection}: production home, selection, preview, both map chapters, shared hero, keeper report returns to the map, save and reopen`);
