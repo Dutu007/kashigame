@@ -4,13 +4,13 @@ import HomePage from './components/HomePage.vue'
 import CharacterSelect from './components/CharacterSelect.vue'
 import GameLoading from './components/GameLoading.vue'
 import MapPage from './components/MapPage.vue'
-import femaleCharacterUrl from './assets/processed/female-character-transparent.png'
+import { mapArt } from './data/mapVisuals'
+import maleCharacterUrl from './assets/processed/male-character-transparent-v2.png'
+import femaleCharacterUrl from './assets/processed/female-character-transparent-v2.png'
 import journeyButtonUrl from './assets/processed/start-journey-button-transparent.png'
 import loadingBackgroundUrl from '../首页加载.png'
 import loadingTextureUrl from '../加载动画所用材质.png'
-import mapBackgroundUrl from '../地图.png'
 import characterBackgroundUrl from '../角色选择背景图.png'
-import maleCharacterUrl from '../男性角色.png'
 
 const view = ref('home')
 
@@ -22,7 +22,7 @@ function preload(url) {
 onMounted(() => {
   preload(loadingBackgroundUrl)
   preload(loadingTextureUrl)
-  preload(mapBackgroundUrl)
+  preload(mapArt.cityUrl)
   preload(characterBackgroundUrl)
   preload(maleCharacterUrl)
   preload(femaleCharacterUrl)

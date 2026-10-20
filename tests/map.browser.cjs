@@ -8,10 +8,10 @@ const base = process.env.GAME_URL || 'http://localhost:4173/';
 const output = path.resolve(__dirname, '../output');
 fs.mkdirSync(output, { recursive: true });
 
-async function enterChapter(page, region, chapter) {
+async function enterChapter(page, levelId, chapter) {
   const firstWeaveEntry = chapter === 'levels/weave-lane/' && await page.evaluate(() =>
     !JSON.parse(localStorage.getItem('twc_campaign_v1'))?.started?.weave);
-  await page.locator('.region-hit').nth(region).click();
+  await page.locator('#level-' + levelId).click();
   if (chapter === 'levels/weave-lane/') {
     await page.frameLocator('.chapter-loading iframe').locator('#knot').waitFor();
   } else {
@@ -64,32 +64,44 @@ async function finishKarez(child, page) {
         if (response.status() >= 400 && !response.url().endsWith('/favicon.ico')) missing.push(`${response.status()} ${response.url()}`);
       });
       await page.goto(base);
-      await page.locator('.start-button').click();
+      if (hero === 'aide') {
+        await page.getByRole('button', { name: '查看游戏玩法公告', exact: true }).click();
+        await page.getByRole('tab', { name: '地图探索', exact: true }).click();
+        await page.locator('.map-notice-content').evaluate(image => image.decode());
+        await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      }
+      await page.getByRole('button', { name: '开始探索', exact: true }).click();
       await page.getByRole('button', { name: selection === 'male' ? /选择男性角色/ : /选择女性角色/ }).click();
       await page.getByRole('button', { name: '开始旅程', exact: true }).click();
       await page.locator('.map-page').waitFor({ state: 'visible', timeout: 30000 });
       assert.equal(await page.locator('.map-page').getAttribute('data-player-character'), selection);
       if (hero === 'aide') await page.screenshot({ path: path.join(output, 'merge-map.png') });
 
-      await page.locator('.region-hit').first().click();
-      await page.locator('.level-preview').waitFor({ state: 'visible' });
-      await page.waitForFunction(() => document.querySelector('.preview-art img')?.naturalWidth > 0);
-      await page.locator('.preview-close').click();
+      assert.equal(await page.locator('.region-hit').count(), 5);
+      for (const levelId of [3, 4, 5]) {
+        await page.locator('#level-' + levelId).click();
+        await page.locator('.level-preview').waitFor({ state: 'visible' });
+        await page.locator('.scenery-art').evaluate(image => image.decode());
+        assert.match(await page.locator('.scenery-status').innerText(), /玩法尚未开放/);
+        assert.equal(await page.locator('.game-overlay').count(), 0);
+        await page.keyboard.press('Escape');
+      }
 
-      let { host, child } = await enterChapter(page, 2, 'levels/weave-lane/');
+      let { host, child } = await enterChapter(page, 1, 'levels/weave-lane/');
       assert.equal(await host.evaluate(() => Campaign.snapshot().character), hero);
       assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Map selection must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await child.evaluate(() => { state.quest = true; LevelOneProgress.save(); });
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('twc_l1_save')).state.quest), true);
-      ({ child } = await enterChapter(page, 2, 'levels/weave-lane/'));
+      ({ child } = await enterChapter(page, 1, 'levels/weave-lane/'));
       assert.equal(await child.evaluate(() => state.quest), true);
       assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Reopening must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();
 
-      ({ host, child } = await enterChapter(page, 6, 'karez.html'));
+      ({ host, child } = await enterChapter(page, 2, 'karez.html'));
       await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player
         && typeof G !== 'undefined' && G.ui && !KarezTransitions.active, null, { timeout: 30000 });
       assert.equal(await host.evaluate(() => Campaign.snapshot().character), hero);
@@ -107,7 +119,7 @@ async function finishKarez(child, page) {
       await page.locator('.map-notice').waitFor({ state: 'detached', timeout: 8000 });
 
       // Re-entering from the map still works and starts a fresh run.
-      ({ child } = await enterChapter(page, 6, 'karez.html'));
+      ({ child } = await enterChapter(page, 2, 'karez.html'));
       await child.waitForFunction(() => typeof game !== 'undefined' && game.scene.isActive('Surface') && game.scene.getScene('Surface').player);
       assert.equal(await child.evaluate(() => G.state.recordSaved), false);
       await page.getByRole('button', { name: '‹ 返回小镇地图', exact: true }).click();

@@ -2,8 +2,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import characterBackgroundUrl from '../../角色选择背景图.png'
 import journeyButtonUrl from '../assets/processed/start-journey-button-transparent.png'
-import maleCharacterUrl from '../../男性角色.png'
-import femaleCharacterUrl from '../assets/processed/female-character-transparent.png'
+import maleCharacterUrl from '../assets/processed/male-character-transparent-v2.png'
+import femaleCharacterUrl from '../assets/processed/female-character-transparent-v2.png'
+import KashgarPlaque from './KashgarPlaque.vue'
 import audioManager from '../utils/audioManager'
 
 const emit = defineEmits(['start', 'back'])
@@ -14,6 +15,50 @@ const isLeaving = ref(false)
 const isStarting = ref(false)
 let feedbackTimer = null
 let leaveTimer = null
+let selectionAudio = null
+let selectionSoundToken = 0
+let lastSelectionSoundAt = -Infinity
+
+async function playSelectionSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext
+  if (!AudioContextClass || performance.now() - lastSelectionSoundAt < 140) return
+  lastSelectionSoundAt = performance.now()
+  const token = ++selectionSoundToken
+
+  try {
+    selectionAudio ??= new AudioContextClass()
+    const context = selectionAudio
+    if (context.state === 'suspended') await context.resume()
+    if (token !== selectionSoundToken || context.state !== 'running' || isLeaving.value || isStarting.value) return
+
+    // Two soft ascending plucks with a quiet harmonic for a warm confirmation.
+    const now = context.currentTime
+    ;[392, 587.33].forEach((frequency, index) => {
+      const start = now + index * 0.085
+      ;[1, 2, 3].forEach((harmonic, overtone) => {
+        const oscillator = context.createOscillator()
+        const envelope = context.createGain()
+        const duration = 0.32 - overtone * 0.065
+        oscillator.type = 'sine'
+        oscillator.frequency.setValueAtTime(frequency * harmonic, start)
+        envelope.gain.setValueAtTime(0, start)
+        envelope.gain.linearRampToValueAtTime(0.09 / (harmonic * harmonic), start + 0.008)
+        envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+        envelope.gain.linearRampToValueAtTime(0, start + duration + 0.015)
+        oscillator.connect(envelope)
+        envelope.connect(context.destination)
+        oscillator.start(start)
+        oscillator.stop(start + duration + 0.02)
+        oscillator.onended = () => {
+          oscillator.disconnect()
+          envelope.disconnect()
+        }
+      })
+    })
+  } catch {
+    // Selection remains usable when browser audio is unavailable.
+  }
+}
 
 const displayCharacter = computed(() => hoveredCharacter.value || selectedCharacter.value)
 
@@ -33,7 +78,8 @@ const characters = {
 }
 
 function chooseCharacter(character) {
-  if (isStarting.value || selectedCharacter.value === character) return
+  if (isStarting.value || isLeaving.value) return
+  playSelectionSound()
   selectedCharacter.value = character
   sessionStorage.setItem('selectedCharacter', character)
   feedbackCharacter.value = character
@@ -64,6 +110,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  selectionSoundToken += 1
+  selectionAudio?.close().catch(() => {})
+  selectionAudio = null
   window.clearTimeout(feedbackTimer)
   window.clearTimeout(leaveTimer)
 })
@@ -102,7 +151,7 @@ onBeforeUnmount(() => {
         <span>{{ characters.male.traits }}</span>
         <small>{{ characters.male.quote }}</small>
       </div>
-      <span v-if="selectedCharacter === 'male'" class="selected-badge">已选择</span>
+      <span v-if="selectedCharacter === 'male'" class="selected-badge"><KashgarPlaque /><span class="ornament-label">已选择</span></span>
     </section>
 
     <section class="character-zone female-zone" :class="{ 'is-active': displayCharacter === 'female' }">
@@ -128,10 +177,10 @@ onBeforeUnmount(() => {
         <span>{{ characters.female.traits }}</span>
         <small>{{ characters.female.quote }}</small>
       </div>
-      <span v-if="selectedCharacter === 'female'" class="selected-badge">已选择</span>
+      <span v-if="selectedCharacter === 'female'" class="selected-badge"><KashgarPlaque /><span class="ornament-label">已选择</span></span>
     </section>
 
-    <button class="back-button" type="button" aria-label="返回游戏首页" @click="goBack">返回</button>
+    <button class="back-button" type="button" aria-label="返回游戏首页" @click="goBack"><KashgarPlaque variant="sand" /><span class="ornament-label">返回</span></button>
 
     <button
       class="journey-button"
@@ -168,20 +217,25 @@ onBeforeUnmount(() => {
 .character-copy span, .character-copy small { font: 500 clamp(11px, .82vw, 14px)/1.35 'Songti SC', serif; }
 .character-copy small { color: #754329; }
 .character-zone:not(.is-active) .character-copy { opacity: .72; }
-.selected-badge { position: absolute; top: 12%; right: 7%; z-index: 5; padding: 9px 20px; border: 1px solid #d9a24e; border-radius: 6px 9px 6px 8px; color: #faeed5; background: #6e3b1f; box-shadow: 0 3px 8px rgba(70,32,12,.25), inset 0 0 0 1px rgba(255,218,139,.32); font: 600 clamp(14px, 1.05vw, 18px)/1.3 'Songti SC', serif; white-space: nowrap; pointer-events: none; }
+.selected-badge { position: absolute; top: 12%; right: 7%; z-index: 5; display: grid; place-items: center; width: clamp(112px, 10vw, 154px); height: 64px; color: #fff3d5; filter: drop-shadow(0 4px 5px rgba(74, 45, 27, .24)); font: 700 clamp(14px, 1.05vw, 18px)/1.3 'Songti SC', serif; letter-spacing: .12em; white-space: nowrap; pointer-events: none; }
+.ornament-label { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; text-shadow: 0 1px 2px rgba(48, 23, 15, .35); }
+
 .journey-button { position: absolute; left: 50%; bottom: 6.4%; z-index: 8; width: clamp(260px, 22vw, 420px); padding: 0; border: 0; background: transparent; cursor: pointer; transform: translateX(-50%); transition: transform 180ms ease, filter 180ms ease; animation: journey-in 650ms 240ms ease-out both; }
 .journey-button img { display: block; width: 100%; height: auto; background: transparent; object-fit: contain; user-select: none; }
 .journey-button:hover, .journey-button:focus-visible { filter: brightness(1.08) drop-shadow(0 0 8px rgba(241,192,93,.35)); transform: translateX(-50%) scale(1.035); }
 .journey-button:active { transform: translateX(-50%) scale(.97); transition-duration: 100ms; }
 .journey-button:focus-visible, .back-button:focus-visible, .character-hitbox:focus-visible { outline: 2px solid rgba(250,223,153,.9); outline-offset: 4px; }
 .journey-button:disabled { cursor: default; }
-.back-button { position: absolute; left: 3.5%; bottom: 5%; z-index: 9; padding: 9px 20px; border: 1px solid rgba(185,124,56,.85); border-radius: 5px 8px 4px 7px; color: #6e3b1f; background: rgba(246,228,190,.9); box-shadow: 0 4px 12px rgba(70,32,12,.16); cursor: pointer; font: 600 clamp(13px, 1vw, 17px)/1.2 'Songti SC', serif; transition: transform 180ms ease, filter 180ms ease; }
-.back-button:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.back-button { position: absolute; left: 3.5%; bottom: 5%; z-index: 9; display: grid; place-items: center; width: 140px; height: 64px; padding: 0; border: 0; color: #693f25; background: transparent; filter: drop-shadow(0 4px 5px #371b1844); cursor: pointer; font: 700 clamp(14px, 1vw, 17px)/1.2 'Songti SC', serif; transition: transform 180ms ease, filter 180ms ease; }
+.back-button .ornament-label { color: #72533d; letter-spacing: .16em; text-shadow: 0 1px #fff8e8; }
+.back-button:hover, .back-button:focus-visible { filter: brightness(1.1) drop-shadow(0 5px 8px #371b1866); transform: translateY(-3px); }
+.back-button:active { transform: translateY(0) scale(.97); }
+
 @keyframes backdrop-in { from { opacity: 0; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }
 @keyframes character-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 @keyframes character-select-pop { 0% { transform: translateX(-50%) scale(1.04); } 35% { transform: translateX(-50%) scale(.99); } 70% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1.04); } }
 @keyframes journey-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (max-width: 900px) { .character-zone { width: 40vw; bottom: 24%; } .male-zone { left: 27%; } .female-zone { right: 27%; } .character-copy { width: min(280px, 36vw); } }
-@media (max-width: 640px) { .character-select { min-height: 620px; } .character-zone { bottom: 22%; width: 48vw; height: 50vh; min-height: 300px; } .male-zone { left: 24%; } .female-zone { right: 24%; } .character-image { height: clamp(260px, 40vh, 390px); } .character-copy { bottom: -13%; width: 42vw; } .character-copy span, .character-copy small { font-size: 10px; } .selected-badge { top: 8%; right: 3%; } .journey-button { width: min(72vw, 390px); bottom: 4%; } .back-button { left: 4%; bottom: 4.8%; padding: 7px 13px; } }
+@media (max-width: 640px) { .character-select { min-height: 620px; } .character-zone { bottom: 22%; width: 48vw; height: 50vh; min-height: 300px; } .male-zone { left: 24%; } .female-zone { right: 24%; } .character-image { height: clamp(260px, 40vh, 390px); } .character-copy { bottom: -13%; width: 42vw; } .character-copy span, .character-copy small { font-size: 10px; } .selected-badge { top: 8%; right: 3%; } .journey-button { width: min(72vw, 390px); bottom: 4%; } .back-button { left: 4%; bottom: 4.8%; width: 112px; height: 56px; } }
 @media (prefers-reduced-motion: reduce) { .character-select, .character-backdrop, .character-float, .journey-button, .character-image, .character-halo { animation: none; transition-duration: .01ms; } }
 </style>

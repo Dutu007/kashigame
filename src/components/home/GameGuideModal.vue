@@ -3,6 +3,7 @@ import { nextTick, onMounted, ref } from 'vue'
 import notice1 from '../../../首页公告1.png'
 import notice2 from '../../../首页公告2.png'
 import notice3 from '../../../首页公告3.png'
+import mapNoticeContent from '../../assets/map-notice-five-chapters.png'
 import notice4 from '../../../首页公告4.png'
 import notice5 from '../../../首页公告5.png'
 import ActiveTabDecoration from './ActiveTabDecoration.vue'
@@ -34,6 +35,7 @@ onMounted(() => nextTick(() => closeButton.value?.focus()))
       <div class="guide-artboard">
         <div id="guide-page" role="tabpanel" :aria-labelledby="`guide-tab-${activeNotice}`">
           <img v-for="(notice, index) in notices" :key="notice.label" class="guide-image" :class="{ 'is-visible': activeNotice === index }" :src="notice.image" :alt="`《喀什小镇》${notice.label}公告`" :aria-hidden="activeNotice !== index" draggable="false" />
+          <img v-if="activeNotice === 2" class="map-notice-content" :src="mapNoticeContent" alt="五个区域，两段旅程。织梦巷、坎儿井可进入游戏；喀什巴扎、土陶工坊、木卡姆庭院可欣赏风景，玩法尚未开放。点击地图区域或标牌即可查看，关卡内可返回小镇地图。" draggable="false" />
         </div>
         <div class="guide-tabs" role="tablist" aria-label="玩法导览栏目">
           <button v-for="(notice, index) in notices" :id="`guide-tab-${index}`" :key="notice.label" class="guide-tab" :style="tabStyle(notice)" :class="{ 'is-active': activeNotice === index }" type="button" role="tab" :aria-label="notice.label" aria-controls="guide-page" :aria-selected="activeNotice === index" @click="selectNotice(index)">
@@ -53,6 +55,8 @@ onMounted(() => nextTick(() => closeButton.value?.focus()))
 .guide-artboard { position: relative; aspect-ratio: 1499 / 1049; filter: drop-shadow(0 18px 28px rgba(45,25,10,.3)); }
 .guide-image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
 .guide-image.is-visible { opacity: 1; }
+/* Replace only the content below the tabs; keep the original ornamental frame. */
+.map-notice-content { position: absolute; left: 5.7%; top: 30.7%; width: 88.6%; height: 63%; object-fit: fill; pointer-events: none; clip-path: polygon(4% 0, 96% 0, 100% 9%, 100% 73%, 98.5% 79%, 98.5% 93%, 96% 100%, 55% 100%, 50% 95%, 45% 100%, 5% 100%, 1.5% 93%, 1.5% 79%, 0 73%, 0 9%); }
 .guide-tabs { position: absolute; inset: 0; pointer-events: none; }
 .guide-tab { position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer; pointer-events: auto; }
 .guide-tab::before { content: ''; position: absolute; inset: 0 12% 15%; border-radius: 50%; background: radial-gradient(ellipse, #ffd78626, transparent 70%); opacity: 0; transition: opacity 140ms ease; }
