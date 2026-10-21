@@ -69,6 +69,10 @@ console.log(`体积：${(totalBytes / 1024 / 1024).toFixed(1)} MB`);
 if (wantZip) {
   const zipPath = outDir + '.zip';
   console.log('压缩为 ' + zipPath + '（稍等）');
-  execFileSync('tar', ['-a', '-c', '-f', zipPath, outDir.split(/[\\/]/).pop()], { cwd: join(outDir, '..'), stdio: 'inherit' });
+  // Compress-Archive 写入 UTF-8 文件名标记，资源管理器解压中文文件名不会乱码。
+  const quote = value => "'" + value.replace(/'/g, "''") + "'";
+  execFileSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+    `Compress-Archive -Path ${quote(outDir)} -DestinationPath ${quote(zipPath)} -CompressionLevel Fastest -Force`],
+  { stdio: 'inherit' });
   console.log(`压缩完成：${zipPath}（${((await stat(zipPath)).size / 1024 / 1024).toFixed(1)} MB）`);
 }
