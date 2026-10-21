@@ -37,17 +37,18 @@
   function enter(id, fresh = false) {
     if (!chapters[id] || !canEnter(id)) return;
     if ($('completion').open) $('completion').close();
-    // Returning players resume their chapter without replaying the opening story.
-    const intro = id === 'weave' && !Campaign.snapshot().started.weave;
     unload();
-    if (id === 'karez' && fresh) Campaign.resetChapter(id);
+    // Entering from the map always restarts that chapter from the beginning.
+    if (fresh) Campaign.resetChapter(id);
+    // A fresh run replays the opening story; an in-progress run resumes directly.
+    const intro = id === 'weave' && !Campaign.snapshot().started.weave;
     current = id; Campaign.enter(id);
     const coveredEntry = !fromMap && intro;
     $('menu').hidden = !coveredEntry; $('play').hidden = false; $('loading').hidden = false;
     $('play').style.visibility = coveredEntry ? 'hidden' : '';
     $('chapterTitle').textContent = chapters[id].title;
     frame = document.createElement('iframe'); frame.title = chapters[id].title; frame.allow = 'autoplay; fullscreen';
-    const url = new URL(intro ? 'levels/weave-lane/intro/index.html?embedded=1' : chapters[id].url, document.baseURI);
+    const url = new URL(intro ? 'levels/weave-lane/intro/index.html?embedded=1&v=2' : chapters[id].url, document.baseURI);
     frame.src = url.href;
     const chapterFrame = frame;
     let revealChapter;
@@ -138,6 +139,6 @@
   });
   refresh();
   const requested = query.get('chapter') || location.hash.slice(1);
-  if (chapters[requested]) enter(requested, fromMap && requested === 'karez');
+  if (chapters[requested]) enter(requested, fromMap);
   else if (['weave','karez'].includes(query.get('completed'))) showCompletion(query.get('completed'));
 })();

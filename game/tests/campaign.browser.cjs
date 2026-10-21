@@ -15,7 +15,8 @@ fs.mkdirSync(output, { recursive: true });
   try {
     for (const hero of ['aide', 'aysu']) {
       const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
-      // A reload also waits for the embedded chapter's artwork to finish loading.
+      // Embedded chapters keep loading artwork after DOMContentLoaded, so reloads wait
+      // for the document only and let the following frame checks wait for the scene.
       context.setDefaultNavigationTimeout(60000);
       await context.addInitScript(() => {
         localStorage.setItem('twc_tools', '1');
@@ -36,6 +37,7 @@ fs.mkdirSync(output, { recursive: true });
       assert.equal(await page.locator('#enterKarez').isDisabled(), true);
       if (hero === 'aide') await page.screenshot({ path: path.join(output, 'merged-menu.png'), fullPage: true });
       await page.locator('#enterWeave').click();
+      await skipOpening(page);
       let first = await chapterFrame(page, 'levels/weave-lane/');
       await first.waitForFunction(() => typeof document.getElementById('startJourney')?.onclick === 'function');
       await first.locator('#choice-' + hero).click();
@@ -98,14 +100,14 @@ fs.mkdirSync(output, { recursive: true });
       first = await chapterFrame(page, 'levels/weave-lane/');
       await first.locator('#compareOverlay').waitFor({ state: 'visible' });
       assert.equal(await first.evaluate(() => state.busy), true);
-      await page.reload();
+      await page.reload({ waitUntil: 'domcontentloaded' });
       first = await chapterFrame(page, 'levels/weave-lane/');
       await first.locator('#compareOverlay').waitFor({ state: 'visible' });
       await first.locator('#silkCollect').click();
       await first.evaluate(() => collectSilk()); // A repeated click cannot duplicate the receipt.
       assert.equal(await first.evaluate(() => state.collection.length), 1);
       assert.equal(await first.evaluate(() => state.silkCollected), true);
-      await page.reload();
+      await page.reload({ waitUntil: 'domcontentloaded' });
       first = await chapterFrame(page, 'levels/weave-lane/');
       await first.waitForFunction(() => typeof state !== 'undefined' && !state.busy);
       assert.equal(await first.locator('#compareOverlay').isVisible(), false);
@@ -191,7 +193,7 @@ fs.mkdirSync(output, { recursive: true });
       const lamp = await second.evaluate(() => { const s = game.scene.getScene('Tunnel'); return { hero: s.player.heroId, facing: s.player.facing, lamp: s.lampImg.texture.key, x: s.lampImg.x, playerX: s.player.x }; });
       assert.equal(lamp.hero, hero); assert.equal(lamp.facing, -1); assert.equal(lamp.lamp, 'LAMP_L'); assert.ok(lamp.x < lamp.playerX);
       await page.screenshot({ path: path.join(output, `karez-tunnel-${hero}.png`) });
-      await page.reload();
+      await page.reload({ waitUntil: 'domcontentloaded' });
       second = await chapterFrame(page, 'karez.html'); await readyKarez(second, 'Tunnel');
       assert.equal(await second.evaluate(() => G.state.lastSeg), 'UA');
       assert.equal(await second.evaluate(() => game.scene.getScene('Tunnel').player.heroId), hero);
@@ -230,9 +232,28 @@ fs.mkdirSync(output, { recursive: true });
 
 async function chapterFrame(page, match) {
   await page.waitForFunction(part => { const f = document.querySelector('iframe'); const url = f?.contentWindow?.location.href; return url?.includes(part) && !url.includes('/intro/'); }, match);
-  const frame = page.frames().find(frame => frame.url().includes(match));
-  await frame.waitForLoadState('load');
+  const frame = page.frames().find(frame => frame.url().includes(match) && !frame.url().includes('/intro/'));
+  // Chapters keep streaming artwork after load; callers wait for their own scene hooks,
+  // so only the document (not every image) has to be ready here.
+  await frame.waitForLoadState('domcontentloaded').catch(() => {});
   return frame;
+}
+// The chapter-one opening is a video; tests skip it instead of watching the whole clip.
+async function skipOpening(page) {
+  for (let i = 0; i < 200; i++) {
+    const intro = page.frames().find(frame => frame.url().includes('/intro/'));
+    if (intro) {
+      // The frame exists before its scripts run: retry until ChapterBridge can skip.
+      const skipped = await intro.evaluate(() => {
+        if (!window.ChapterBridge || typeof window.ChapterBridge.skip !== 'function') return false;
+        window.ChapterBridge.skip();
+        return true;
+      }).catch(() => false);
+      if (skipped) return true;
+    }
+    await page.waitForTimeout(100);
+  }
+  return false;
 }
 async function readyKarez(frame, scene) {
   await frame.waitForFunction(key => typeof game !== 'undefined' && game.scene?.isActive(key) && game.scene.getScene(key).player && typeof G !== 'undefined' && G.ui && !KarezTransitions.active, scene, { timeout: 30000 });

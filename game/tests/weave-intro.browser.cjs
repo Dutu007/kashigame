@@ -14,15 +14,17 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     });
     await page.goto(base + '?entry=map&chapter=weave&hero=aide');
     const intro = page.frameLocator('#chapterMount iframe');
-    await intro.locator('.background').waitFor();
+    await intro.locator('.intro-video').waitFor();
     assert.equal(await intro.locator('#stage').evaluate(el => el.classList.contains('play')), false);
     await page.evaluate(() => GameApp.resume());
     await intro.locator('#stage.play').waitFor();
-    await intro.locator('.row-5 .story-text').evaluate(el => new Promise(resolve => {
-      if (getComputedStyle(el).opacity === '1') return resolve();
-      el.addEventListener('animationend', resolve, { once: true });
-    }));
+    // The opening is the supplied chapter-one video and must actually play.
+    await page.waitForFunction(() => {
+      const video = document.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('.intro-video');
+      return !!video && !video.paused && video.readyState >= 2 && video.currentTime > 0;
+    }, null, { timeout: 30000 });
     if (process.env.INTRO_SCREENSHOT) await page.screenshot({ path: process.env.INTRO_SCREENSHOT });
+    await page.evaluate(() => document.querySelector('#chapterMount iframe').contentWindow.ChapterBridge.skip());
     await intro.locator('#board').waitFor({ timeout: 20000 });
     const child = page.frames().find(frame => /weave-lane\/index.html/.test(frame.url()));
     await child.waitForFunction(() => typeof state !== 'undefined' && typeof LevelOneProgress !== 'undefined');
@@ -48,6 +50,6 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     assert.equal(await earlyExit.locator('#chapterMount iframe').count(), 0);
     await earlyExit.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: first-entry intro waits for map, completes automatically, preserves hero/save, continuing skips replay, and early exit works');
+    console.log('PASS: chapter-one video opening waits for the map, plays, skips into the chapter, preserves hero/save, continuing skips replay, and early exit works');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

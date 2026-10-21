@@ -912,3 +912,53 @@ opacity:1;
   .story-text{ transform:none; }
 }
 @keyframes reducedReveal{ from{opacity:0} to{opacity:1} }
+
+/* =====================
+   第一关片头视频
+   视频可用时覆盖旁白分镜；不可播放时回到上面的旁白兜底。
+===================== */
+
+.intro-video{
+  position:absolute;
+  inset:0;
+  z-index:6;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#17110d;
+  opacity:0;
+  transition:opacity .38s ease;
+  pointer-events:none;
+}
+
+#stage.video-mode.video-playing .intro-video{ opacity:1; }
+
+/* 视频播放时隐藏分镜旁白与装饰层，避免叠在画面上。 */
+#stage.video-mode .narration,
+#stage.video-mode .particles,
+#stage.video-mode .fabric-mist,
+#stage.video-mode .fabric-texture,
+#stage.video-mode .warm-sweep,
+#stage.video-mode .handoff{ display:none; }
+
+.intro-skip{
+  position:absolute;
+  right:clamp(14px,2.2vw,30px);
+  bottom:clamp(14px,2.4vh,28px);
+  z-index:7;
+  padding:.62em 1.15em;
+  border:1px solid var(--gold-line);
+  border-radius:999px;
+  color:var(--text);
+  background:rgba(247,236,212,.92);
+  box-shadow:0 6px 18px rgba(40,24,10,.28);
+  font:inherit;
+  font-size:clamp(13px,1.05vw,16px);
+  letter-spacing:.04em;
+  cursor:pointer;
+  transition:background .2s ease,transform .2s ease;
+}
+
+.intro-skip:hover{ background:#fff6e2; }
+.intro-skip:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+.intro-skip:active{ transform:translateY(1px); }

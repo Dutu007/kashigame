@@ -8,9 +8,32 @@ const base = process.env.GAME_URL || 'http://localhost:4173/';
 const output = path.resolve(__dirname, '../output');
 fs.mkdirSync(output, { recursive: true });
 
-async function enterChapter(page, levelId, chapter) {
-  const firstWeaveEntry = chapter === 'levels/weave-lane/' && await page.evaluate(() =>
-    !JSON.parse(localStorage.getItem('twc_campaign_v1'))?.started?.weave);
+async function waitForIntro(page) {
+  for (let i = 0; i < 100; i++) {
+    const intro = page.frames().find(frame => frame.url().includes('/intro/'));
+    if (intro) {
+      await intro.waitForLoadState('load').catch(() => {});
+      return intro;
+    }
+    await page.waitForTimeout(100);
+  }
+  return null;
+}
+
+async function skipOpeningFrame(intro) {
+  for (let i = 0; i < 200; i++) {
+    // The frame exists before its scripts run: retry until ChapterBridge can skip.
+    const skipped = await intro.evaluate(() => {
+      if (!window.ChapterBridge || typeof window.ChapterBridge.skip !== 'function') return false;
+      window.ChapterBridge.skip();
+      return true;
+    }).catch(() => false);
+    if (skipped) return;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+
+async function enterChapter(page, levelId, chapter, { expectOpening = false } = {}) {
   await page.locator('#level-' + levelId).click();
   if (chapter === 'levels/weave-lane/') {
     await page.frameLocator('.chapter-loading iframe').locator('#knot').waitFor();
@@ -20,18 +43,26 @@ async function enterChapter(page, levelId, chapter) {
   await page.locator('.chapter-loading').waitFor({ state: 'hidden', timeout: 30000 });
   const hostFrame = await page.locator('.game-overlay iframe').elementHandle().then(element => element.contentFrame());
   await hostFrame.waitForLoadState('load');
-  if (firstWeaveEntry) {
-    const intro = page.frames().find(frame => frame.url().includes('/intro/'));
-    assert.ok(intro, 'Weave chapter must begin with the supplied transition');
-    await intro.locator('#stage.play').waitFor();
+  if (chapter === 'levels/weave-lane/') {
+    const intro = await waitForIntro(page);
+    if (expectOpening) {
+      assert.ok(intro, 'Weave chapter must begin with its opening video');
+      await intro.locator('#stage.play').waitFor();
+      await page.waitForFunction(() => {
+        const video = document.querySelector('.game-overlay iframe')?.contentDocument
+          ?.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('.intro-video');
+        return !!video && !video.paused && video.currentTime > 0;
+      }, null, { timeout: 20000 });
+    }
+    if (intro) await skipOpeningFrame(intro);
     await page.waitForFunction(() => {
-      const host = document.querySelector('.game-overlay iframe')?.contentDocument;
-      return host?.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('#board');
-    }, null, { timeout: 20000 });
+      const frame = document.querySelector('.game-overlay iframe')?.contentDocument?.querySelector('#chapterMount iframe');
+      return !!frame && frame.contentWindow?.location.href.includes('levels/weave-lane/index.html');
+    }, null, { timeout: 30000 });
   }
   const child = page.frames().find(frame => frame.url().includes(chapter) && !frame.url().includes('/intro/'));
   assert.ok(child, `Missing chapter frame: ${chapter}`);
-  await child.waitForLoadState('load');
+  await child.waitForLoadState('domcontentloaded').catch(() => {});
   return { host: hostFrame, child };
 }
 
@@ -88,16 +119,19 @@ async function finishKarez(child, page) {
         await page.keyboard.press('Escape');
       }
 
-      let { host, child } = await enterChapter(page, 1, 'levels/weave-lane/');
+      let { host, child } = await enterChapter(page, 1, 'levels/weave-lane/', { expectOpening: true });
       assert.equal(await host.evaluate(() => Campaign.snapshot().character), hero);
       assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Map selection must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await child.evaluate(() => { state.quest = true; LevelOneProgress.save(); });
       await page.getByRole('button', { name: '返回小镇地图', exact: true }).click();
       assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('twc_l1_save')).state.quest), true);
-      ({ child } = await enterChapter(page, 1, 'levels/weave-lane/'));
-      assert.equal(await child.evaluate(() => state.quest), true);
-      assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Reopening must skip chapter character setup');
+
+      // Entering chapter one from the map always starts a brand-new run, like chapter two.
+      ({ child } = await enterChapter(page, 1, 'levels/weave-lane/', { expectOpening: true }));
+      assert.equal(await child.evaluate(() => state.quest), false, 'Map re-entry must restart chapter one');
+      assert.equal(await child.evaluate(() => state.collection.length), 0, 'Map re-entry must clear the previous run');
+      assert.equal(await child.locator('#characterSetup').isVisible(), false, 'Map selection must skip chapter character setup');
       assert.equal(await child.evaluate(() => state.character), hero);
       await page.getByRole('button', { name: '返回小镇地图', exact: true }).click();
 

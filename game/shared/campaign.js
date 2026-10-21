@@ -83,7 +83,10 @@
     resetChapter(id) {
       checkChapter(id);
       write(id === 'weave' ? 'twc_l1_save' : 'twc_l2_save', null);
-      data.completed[id] = false; commit();
+      // A restart is a brand-new run: the chapter opening plays again.
+      data.completed[id] = false;
+      data.started[id] = false;
+      commit();
     },
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
   });
