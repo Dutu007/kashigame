@@ -1,0 +1,47 @@
+{
+  "name": "kashigame-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "时间织城 · 喀什小镇 桌面版",
+  "main": "main.cjs",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.kashgar.timecity",
+    "productName": "时间织城 喀什小镇",
+    "directories": {
+      "output": "../release-desktop"
+    },
+    "files": [
+      "main.cjs",
+      "package.json",
+      "icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist",
+        "to": "app"
+      }
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico"
+    },
+    "portable": {
+      "artifactName": "时间织城-喀什小镇.exe",
+      "requestExecutionLevel": "user"
+    }
+  }
+}

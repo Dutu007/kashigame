@@ -41,6 +41,22 @@ node scripts/package-windows.mjs --zip
 
 产物在 `release/kashigame-win/`（加 `--zip` 时同时生成同名压缩包）：里面包含 `app/` 构建结果、`runtime/node.exe` 内置运行时、本地静态服务 `server.mjs`、`启动游戏.bat` / `关闭游戏.bat` 和使用说明。双击「启动游戏.bat」会自动启动本地服务并打开默认浏览器，无需安装 Node.js 或 Python；服务只监听 `127.0.0.1`，支持视频按区间请求，退出时双击「关闭游戏.bat」即可。
 
+## Windows 单文件版（双击即玩）
+
+```bash
+npm run build
+cd desktop
+npm install
+npx electron-builder --win portable --x64   # 单文件便携版
+npx electron-builder --win nsis --x64       # 安装版（安装后启动更快）
+```
+
+产物在 `release-desktop/`：便携版是单个 `时间织城-喀什小镇.exe`（约 444MB），内置 Electron 运行时和全部游戏资源，双击直接打开应用窗口，不需要解压、安装或另外的文件夹。首次启动会先把资源解压到系统临时目录（实测约 30–40 秒），每次启动都会重新解压；嫌慢可以改用 `--win nsis` 生成安装版（安装到当前用户目录，之后启动不用再解压）。
+
+桌面版入口在 `desktop/main.cjs`：内置本地服务读取打包后的 `dist`，用应用窗口加载首页，窗口关闭即退出；窗口/任务栏图标为 `desktop/icon.png`。exe 文件图标保持 Electron 默认：对 444MB 的单文件 exe 用 rcedit 重写资源会损坏文件，所以打包时关闭了 `signAndEditExecutable`。
+
+> 注意：Windows 桌面版使用 Electron 33（x64），不兼容 macOS。若在设置了 `ELECTRON_RUN_AS_NODE` 的终端里调试，需要先清除该环境变量。
+
 ## 单独运行两关游戏
 
 需要 Python 3。在项目根目录执行：
