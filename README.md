@@ -32,6 +32,15 @@ npm run preview
 
 构建结果位于 `dist/`，包含首页和 `dist/game/` 下的两关游戏，可部署到静态 HTTP 服务。
 
+## Windows 免安装包
+
+```bash
+npm run build
+node scripts/package-windows.mjs --zip
+```
+
+产物在 `release/kashigame-win/`（加 `--zip` 时同时生成同名压缩包）：里面包含 `app/` 构建结果、`runtime/node.exe` 内置运行时、本地静态服务 `server.mjs`、`启动游戏.bat` / `关闭游戏.bat` 和使用说明。双击「启动游戏.bat」会自动启动本地服务并打开默认浏览器，无需安装 Node.js 或 Python；服务只监听 `127.0.0.1`，支持视频按区间请求，退出时双击「关闭游戏.bat」即可。
+
 ## 单独运行两关游戏
 
 需要 Python 3。在项目根目录执行：
