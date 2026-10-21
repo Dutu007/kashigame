@@ -1,49 +1,63 @@
 const stage = document.getElementById('stage');
-const video = document.querySelector('.intro-video');
-const skip = document.querySelector('.intro-skip');
 const replay = document.querySelector('.replay');
 
 const DESIGN_W = 1672;
 const DESIGN_H = 941;
-/* Narration fallback timing; also used when the opening video cannot play. */
 const TRANSITION_DURATION = 11100;
-/* Give the decoder time to produce a frame before falling back to narration. */
-const VIDEO_STALL = 12000;
+
+const embedded = new URLSearchParams(location.search).has('embedded');
 
 let transitionTimer = null;
-let stallTimer = null;
 let rafA = null;
 let rafB = null;
 let ready = false;
-let requested = !new URLSearchParams(location.search).has('embedded');
+let requested = !embedded;
 let started = false;
 let finished = false;
 let skipRequested = false;
-let mode = null;
-let pausedByHost = false;
 
-// The map loading screen calls resume only once the chapter is visible.
+/* ========================================
+   舞台自适应
+   ======================================== */
+function fitStage() {
+  const scale = Math.min(
+    window.innerWidth / DESIGN_W,
+    window.innerHeight / DESIGN_H
+  );
+
+  stage.style.setProperty('--stage-scale', String(scale));
+}
+
+/* ========================================
+   转场完成
+   ======================================== */
+function complete() {
+  if (finished) return;
+  finished = true;
+  clearTimeout(transitionTimer);
+  transitionTimer = null;
+  window.dispatchEvent(
+    new CustomEvent('zhimengxiangTransitionComplete')
+  );
+}
+
+// 地图加载层会把入场动画放到画面上之后再调用 resume；
+// 直接打开本页预览时则自动播放。
 function startWhenReady() {
   requested = true;
   if (!ready || started) return;
   started = true;
-  startVideo();
+  if (skipRequested) {
+    complete();
+    return;
+  }
+  restart();
 }
 window.ChapterBridge = {
-  resume() {
-    if (pausedByHost) {
-      pausedByHost = false;
-      if (mode === 'video') playVideo();
-      return;
-    }
-    startWhenReady();
-  },
+  resume: startWhenReady,
   save() {},
-  pause() {
-    pausedByHost = true;
-    if (mode === 'video' && !video.paused) video.pause();
-  },
-  /* Skips the opening and hands the chapter back to the shell. */
+  pause() {},
+  /* 供外壳跳过入场动画（测试也用它跳到正片）。 */
   skip() {
     if (finished) return;
     if (!started) {
@@ -55,93 +69,32 @@ window.ChapterBridge = {
 };
 
 /* ========================================
-   舞台自适应
+   清理 RAF
    ======================================== */
-function fitStage() {
-  // Cover the viewport so the transition has no side/top letterbox bars.
-  // The fixed design stage is intentionally cropped at the overflowing edge.
-  const scale = Math.max(
-    window.innerWidth / DESIGN_W,
-    window.innerHeight / DESIGN_H
-  );
+function clearRafs() {
+  if (rafA !== null) {
+    cancelAnimationFrame(rafA);
+    rafA = null;
+  }
 
-  stage.style.setProperty('--stage-scale', String(scale));
+  if (rafB !== null) {
+    cancelAnimationFrame(rafB);
+    rafB = null;
+  }
 }
 
 /* ========================================
-   完成转场：交给关卡外壳切到正片
+   播放 / 重播动画
    ======================================== */
-function complete() {
-  if (finished) return;
-  finished = true;
-  clearTimeout(transitionTimer);
-  transitionTimer = null;
-  clearTimeout(stallTimer);
-  stallTimer = null;
-  if (video) {
-    try {
-      video.pause();
-    } catch (_) {
-      /* A missing decoder must not block the handoff. */
-    }
-  }
-  window.dispatchEvent(new CustomEvent('zhimengxiangTransitionComplete'));
-}
+function restart() {
+  clearRafs();
 
-/* ========================================
-   片头视频
-   ======================================== */
-function playVideo() {
-  if (!video) return;
-  const playback = video.play();
-  if (playback && playback.catch) {
-    playback.catch(() => {
-      if (!finished) startNarration();
-    });
+  if (transitionTimer !== null) {
+    clearTimeout(transitionTimer);
+    transitionTimer = null;
   }
-}
 
-function startVideo() {
-  if (!video) {
-    startNarration();
-    return;
-  }
-  if (skipRequested) {
-    complete();
-    return;
-  }
-  mode = 'video';
-  stage.classList.add('video-mode');
-  stage.classList.add('play');
-  if (skip) skip.hidden = false;
-  clearTimeout(stallTimer);
-  stallTimer = setTimeout(() => {
-    if (!finished && mode === 'video' && video.paused) startNarration();
-  }, VIDEO_STALL);
-  playVideo();
-}
-
-/* ========================================
-   旁白兜底：视频不可用时沿用原有分镜旁白
-   ======================================== */
-function startNarration() {
-  if (finished) return;
-  if (mode === 'video') {
-    mode = 'narration';
-    stage.classList.remove('video-mode');
-    stage.classList.remove('video-playing');
-    if (skip) skip.hidden = true;
-    if (video) {
-      try {
-        video.pause();
-      } catch (_) {
-        /* Ignore a stopped element. */
-      }
-    }
-  }
-  clearTimeout(transitionTimer);
-  clearTimeout(stallTimer);
-  stallTimer = null;
+  finished = false;
   stage.classList.remove('play');
 
   /* 跨两个渲染帧重置动画，不同步读取布局。 */
@@ -156,74 +109,11 @@ function startNarration() {
 }
 
 /* ========================================
-   跳过片头
-   ======================================== */
-function skipOpening(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-  if (finished) return;
-  // The shell only starts playback after its own transition; remember an early skip
-  // so it takes effect as soon as the opening is allowed to begin.
-  if (!started) {
-    skipRequested = true;
-    return;
-  }
-  complete();
-}
-if (skip) skip.addEventListener('click', skipOpening);
-window.addEventListener('keydown', event => {
-  if (!['Space', 'Enter', 'Escape'].includes(event.code)) return;
-  skipOpening(event);
-}, true);
-
-/* ========================================
    初始化
    ======================================== */
-function clearRafs() {
-  if (rafA !== null) {
-    cancelAnimationFrame(rafA);
-    rafA = null;
-  }
-
-  if (rafB !== null) {
-    cancelAnimationFrame(rafB);
-    rafB = null;
-  }
-}
-
-function restart() {
-  clearRafs();
-  if (mode === 'video') {
-    if (video) {
-      video.currentTime = 0;
-      playVideo();
-    }
-    return;
-  }
-  startNarration();
-}
-
 async function init() {
   fitStage();
   window.addEventListener('resize', fitStage, { passive: true });
-
-  if (video) {
-    video.addEventListener('playing', () => {
-      clearTimeout(stallTimer);
-      stallTimer = null;
-      // Reveal the video only once it is actually painting; the background stays
-      // visible while the decoder buffers.
-      if (mode === 'video') stage.classList.add('video-playing');
-    });
-    video.addEventListener('error', () => {
-      if (!finished && mode === 'video') startNarration();
-    });
-    video.addEventListener('ended', () => {
-      if (!finished) complete();
-    });
-  }
 
   /* 避免图片解码、字体替换与第一段入场动画争用时间。 */
   const background = stage.querySelector('.background');
@@ -235,6 +125,8 @@ async function init() {
   if (requested) startWhenReady();
 
   if (replay) {
+    /* 外壳里播放时隐藏“重播”，避免把已经交棒的入场动画再放一遍。 */
+    replay.hidden = embedded;
     replay.addEventListener('click', restart);
   }
 }
@@ -254,14 +146,5 @@ if (document.readyState === 'loading') {
 window.addEventListener('beforeunload', () => {
   clearRafs();
   clearTimeout(transitionTimer);
-  clearTimeout(stallTimer);
   transitionTimer = null;
-  stallTimer = null;
-  if (video) {
-    try {
-      video.pause();
-    } catch (_) {
-      /* Ignore a stopped element. */
-    }
-  }
 });

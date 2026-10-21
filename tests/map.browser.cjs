@@ -46,12 +46,12 @@ async function enterChapter(page, levelId, chapter, { expectOpening = false } = 
   if (chapter === 'levels/weave-lane/') {
     const intro = await waitForIntro(page);
     if (expectOpening) {
-      assert.ok(intro, 'Weave chapter must begin with its opening video');
+      assert.ok(intro, 'Weave chapter must begin with its opening animation');
       await intro.locator('#stage.play').waitFor();
       await page.waitForFunction(() => {
-        const video = document.querySelector('.game-overlay iframe')?.contentDocument
-          ?.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('.intro-video');
-        return !!video && !video.paused && video.currentTime > 0;
+        const text = document.querySelector('.game-overlay iframe')?.contentDocument
+          ?.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('.row-1 .story-text');
+        return !!text && parseFloat(getComputedStyle(text).opacity) > 0.05;
       }, null, { timeout: 20000 });
     }
     if (intro) await skipOpeningFrame(intro);

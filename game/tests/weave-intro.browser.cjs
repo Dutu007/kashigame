@@ -14,15 +14,17 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     });
     await page.goto(base + '?entry=map&chapter=weave&hero=aide');
     const intro = page.frameLocator('#chapterMount iframe');
-    await intro.locator('.intro-video').waitFor();
+    await intro.locator('.background').waitFor();
     assert.equal(await intro.locator('#stage').evaluate(el => el.classList.contains('play')), false);
+    assert.equal(await intro.locator('.replay').isHidden(), true, '嵌入式播放时不应出现重播按钮');
     await page.evaluate(() => GameApp.resume());
     await intro.locator('#stage.play').waitFor();
-    // The opening is the supplied chapter-one video and must actually play.
+    // 入场动画开始后，第一段旁白应该真的出现。
     await page.waitForFunction(() => {
-      const video = document.querySelector('#chapterMount iframe')?.contentDocument?.querySelector('.intro-video');
-      return !!video && !video.paused && video.readyState >= 2 && video.currentTime > 0;
-    }, null, { timeout: 30000 });
+      const text = document.querySelector('#chapterMount iframe')?.contentDocument
+        ?.querySelector('.row-1 .story-text');
+      return !!text && parseFloat(getComputedStyle(text).opacity) > 0.05;
+    }, null, { timeout: 20000 });
     if (process.env.INTRO_SCREENSHOT) await page.screenshot({ path: process.env.INTRO_SCREENSHOT });
     await page.evaluate(() => document.querySelector('#chapterMount iframe').contentWindow.ChapterBridge.skip());
     await intro.locator('#board').waitFor({ timeout: 20000 });
@@ -50,6 +52,6 @@ const base = process.env.GAME_URL || 'http://localhost:8123/';
     assert.equal(await earlyExit.locator('#chapterMount iframe').count(), 0);
     await earlyExit.close();
     assert.deepEqual(errors, []);
-    console.log('PASS: chapter-one video opening waits for the map, plays, skips into the chapter, preserves hero/save, continuing skips replay, and early exit works');
+    console.log('PASS: chapter-one opening animation waits for the map, plays its narration, skips into the chapter, preserves hero/save, continuing skips replay, and early exit works');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -48,7 +48,7 @@
     $('play').style.visibility = coveredEntry ? 'hidden' : '';
     $('chapterTitle').textContent = chapters[id].title;
     frame = document.createElement('iframe'); frame.title = chapters[id].title; frame.allow = 'autoplay; fullscreen';
-    const url = new URL(intro ? 'levels/weave-lane/intro/index.html?embedded=1&v=2' : chapters[id].url, document.baseURI);
+    const url = new URL(intro ? 'levels/weave-lane/intro/index.html?embedded=1&v=3' : chapters[id].url, document.baseURI);
     frame.src = url.href;
     const chapterFrame = frame;
     let revealChapter;

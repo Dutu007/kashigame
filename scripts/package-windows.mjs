@@ -58,7 +58,7 @@ const readme = `喀什小镇 · Windows 免安装版
   - 免安装，不需要 Node.js 或 Python，所有文件都在本目录内。
   - app/ 是游戏本体，runtime/ 是内置运行时，请勿单独移动。
   - 存档保存在浏览器的 localStorage 中，换浏览器或清缓存会丢失进度。
-  - 进入第一关会播放片头视频，按空格 / 回车 / Esc 或点右下角按钮可跳过。
+  - 进入第一关会播放约 11 秒的入场动画，播放结束自动进入关卡。
 `;
 await writeFile(join(outDir, '使用说明.txt'), '\ufeff' + readme.replace(/\n/g, '\r\n'), 'utf8');
 
